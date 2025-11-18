@@ -11,9 +11,9 @@ const StartupManage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterSector, setFilterSector] = useState('all');
   const [filterType, setFilterType] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
   const [filterTRL, setFilterTRL] = useState('all');
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -41,13 +41,12 @@ const StartupManage: React.FC = () => {
     
     const matchesSector = filterSector === 'all' || startup.sector === filterSector;
     const matchesType = filterType === 'all' || startup.type === filterType;
-    const matchesStatus = filterStatus === 'all' || startup.status === filterStatus;
     const matchesTRL = filterTRL === 'all' || 
       (filterTRL === '1-3' && startup.trlLevel <= 3) ||
       (filterTRL === '4-6' && startup.trlLevel >= 4 && startup.trlLevel <= 6) ||
       (filterTRL === '7-9' && startup.trlLevel >= 7);
 
-    return matchesSearch && matchesSector && matchesType && matchesStatus && matchesTRL;
+    return matchesSearch && matchesSector && matchesType && matchesTRL;
   });
 
   const getMetrics = () => {
@@ -80,25 +79,27 @@ const StartupManage: React.FC = () => {
   };
 
   const handleStartupNameClick = async (startup: Startup) => {
+    // Set the selected startup immediately to show basic info
+    setSelectedStartup(startup);
+    setShowProfileModal(true);
+    setProfileError(null);
+    setSelectedProfile(null);
+
     // Check if userId exists and is valid
     if (!startup.userId || startup.userId === 'null' || startup.userId === 'undefined' || startup.userId.trim() === '') {
-      setShowProfileModal(true);
       setLoadingProfile(false);
       setProfileError('No user ID found for this startup. Profile may not be completed yet.');
-      setSelectedProfile(null);
       return;
     }
 
-    setShowProfileModal(true);
     setLoadingProfile(true);
-    setProfileError(null);
-    setSelectedProfile(null);
 
     try {
       console.log('Fetching profile for userId:', startup.userId, 'Type:', typeof startup.userId);
       const profile = await profileApi.getProfileByUserId(startup.userId);
       console.log('Profile fetched successfully:', profile);
       setSelectedProfile(profile);
+      setProfileError(null);
     } catch (error) {
       console.error('Error fetching profile:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to load profile details';
@@ -111,6 +112,7 @@ const StartupManage: React.FC = () => {
 
   const closeProfileModal = () => {
     setShowProfileModal(false);
+    setSelectedStartup(null);
     setSelectedProfile(null);
     setProfileError(null);
   };
@@ -235,7 +237,7 @@ const StartupManage: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <select
               value={filterSector}
               onChange={(e) => setFilterSector(e.target.value)}
@@ -255,18 +257,6 @@ const StartupManage: React.FC = () => {
               <option value="all">All Types</option>
               <option value="innovation">Innovation</option>
               <option value="incubation">Incubation</option>
-            </select>
-
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="active">Active</option>
-              <option value="completed">Completed</option>
-              <option value="dropout">Dropout</option>
             </select>
 
             <select
@@ -355,30 +345,95 @@ const StartupManage: React.FC = () => {
         )}
       </Card>
 
-      {/* Profile Details Modal */}
-      {showProfileModal && (
+      {/* Startup Details Modal */}
+      {showProfileModal && selectedStartup && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
           <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Startup Profile Details</h2>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">{selectedStartup.name}</h2>
+                  <p className="text-gray-400 text-sm mt-1">Startup Details & Profile Information</p>
+                </div>
                 <Button variant="ghost" size="sm" onClick={closeProfileModal}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
 
+              {/* Basic Startup Information */}
+              <div className="mb-6 pb-6 border-b border-gray-700">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                  <Building2 className="h-5 w-5 mr-2 text-cyan-400" />
+                  Basic Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-400">Startup Name</label>
+                    <p className="text-white mt-1 font-medium">{selectedStartup.name}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-400 flex items-center">
+                      <User className="h-4 w-4 mr-1" />
+                      Founder
+                    </label>
+                    <p className="text-white mt-1">{selectedStartup.founder}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-400">Sector</label>
+                    <p className="text-white mt-1">{selectedStartup.sector}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-400">Type</label>
+                    <span className={`text-xs px-2 py-1 rounded-full capitalize mt-1 inline-block ${getTypeColor(selectedStartup.type)}`}>
+                      {selectedStartup.type}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-400">Status</label>
+                    <span className={`text-xs px-2 py-1 rounded-full capitalize mt-1 inline-block ${getStatusColor(selectedStartup.status)}`}>
+                      {selectedStartup.status}
+                    </span>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-400">TRL Level</label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <div className={`w-3 h-3 rounded-full ${getTRLColor(selectedStartup.trlLevel)}`} />
+                      <span className="text-white font-medium">TRL {selectedStartup.trlLevel}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-400 flex items-center">
+                      <Mail className="h-4 w-4 mr-1" />
+                      Email
+                    </label>
+                    <p className="text-white mt-1">{selectedStartup.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-400 flex items-center">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Submission Date
+                    </label>
+                    <p className="text-white mt-1">{selectedStartup.submissionDate}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profile Wizard Details */}
               {loadingProfile ? (
                 <div className="flex items-center justify-center py-12">
                   <div className="flex items-center space-x-3">
                     <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
-                    <span className="text-gray-400">Loading profile...</span>
+                    <span className="text-gray-400">Loading profile details...</span>
                   </div>
                 </div>
               ) : profileError ? (
-                <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
+                <div className="p-4 bg-yellow-900/20 border border-yellow-500/50 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <AlertCircle className="h-5 w-5 text-red-400" />
-                    <p className="text-red-300">{profileError}</p>
+                    <AlertCircle className="h-5 w-5 text-yellow-400" />
+                    <div>
+                      <p className="text-yellow-300 font-medium">Profile Details Not Available</p>
+                      <p className="text-yellow-300/80 text-sm mt-1">{profileError}</p>
+                    </div>
                   </div>
                 </div>
               ) : selectedProfile ? (
@@ -454,28 +509,34 @@ const StartupManage: React.FC = () => {
                           <p className="text-white mt-1">{selectedProfile.coFounderNames.join(', ')}</p>
                         </div>
                       )}
-                      {selectedProfile.linkedinProfile && (
-                        <div className="md:col-span-2">
-                          <label className="text-sm font-medium text-gray-400 flex items-center">
-                            <LinkIcon className="h-4 w-4 mr-1" />
-                            LinkedIn Profile
-                          </label>
+                      <div className="md:col-span-2">
+                        <label className="text-sm font-medium text-gray-400 flex items-center">
+                          <LinkIcon className="h-4 w-4 mr-1" />
+                          LinkedIn Profile
+                        </label>
+                        {selectedProfile.linkedinProfile ? (
                           <a href={selectedProfile.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 mt-1 block">
                             {selectedProfile.linkedinProfile}
                           </a>
-                        </div>
-                      )}
+                        ) : (
+                          <p className="text-gray-500 mt-1 text-sm">Not provided</p>
+                        )}
+                      </div>
                     </div>
                   </div>
 
                   {/* Step 3: Incubation Details */}
-                  {selectedProfile.previouslyIncubated && (
-                    <div className="border-t border-gray-700 pt-6">
-                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                        <Building2 className="h-5 w-5 mr-2 text-cyan-400" />
-                        Incubation Details
-                      </h3>
+                  <div className="border-t border-gray-700 pt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <Building2 className="h-5 w-5 mr-2 text-cyan-400" />
+                      Incubation Details
+                    </h3>
+                    {selectedProfile.previouslyIncubated ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium text-gray-400">Previously Incubated</label>
+                          <p className="text-white mt-1">Yes</p>
+                        </div>
                         {selectedProfile.incubatorName && (
                           <div>
                             <label className="text-sm font-medium text-gray-400">Incubator Name</label>
@@ -513,8 +574,10 @@ const StartupManage: React.FC = () => {
                           </div>
                         )}
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <p className="text-gray-400 text-sm">Not previously incubated</p>
+                    )}
+                  </div>
 
                   {/* Step 4: Documentation */}
                   <div className="border-t border-gray-700 pt-6">
@@ -527,30 +590,22 @@ const StartupManage: React.FC = () => {
                         <label className="text-sm font-medium text-gray-400">Aadhaar Document</label>
                         <p className="text-white mt-1 text-sm">{selectedProfile.aadhaarDoc ? 'Uploaded' : 'Not provided'}</p>
                       </div>
-                      {selectedProfile.incorporationCert && (
-                        <div>
-                          <label className="text-sm font-medium text-gray-400">Incorporation Certificate</label>
-                          <p className="text-white mt-1 text-sm">Uploaded</p>
-                        </div>
-                      )}
-                      {selectedProfile.msmeCert && (
-                        <div>
-                          <label className="text-sm font-medium text-gray-400">MSME Certificate</label>
-                          <p className="text-white mt-1 text-sm">Uploaded</p>
-                        </div>
-                      )}
-                      {selectedProfile.dpiitCert && (
-                        <div>
-                          <label className="text-sm font-medium text-gray-400">DPIIT Certificate</label>
-                          <p className="text-white mt-1 text-sm">Uploaded</p>
-                        </div>
-                      )}
-                      {selectedProfile.mouPartnership && (
-                        <div>
-                          <label className="text-sm font-medium text-gray-400">MOU/Partnership</label>
-                          <p className="text-white mt-1 text-sm">Uploaded</p>
-                        </div>
-                      )}
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Incorporation Certificate</label>
+                        <p className="text-white mt-1 text-sm">{selectedProfile.incorporationCert ? 'Uploaded' : 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">MSME Certificate</label>
+                        <p className="text-white mt-1 text-sm">{selectedProfile.msmeCert ? 'Uploaded' : 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">DPIIT Certificate</label>
+                        <p className="text-white mt-1 text-sm">{selectedProfile.dpiitCert ? 'Uploaded' : 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">MOU/Partnership</label>
+                        <p className="text-white mt-1 text-sm">{selectedProfile.mouPartnership ? 'Uploaded' : 'Not provided'}</p>
+                      </div>
                     </div>
                   </div>
 
@@ -603,19 +658,19 @@ const StartupManage: React.FC = () => {
                         <label className="text-sm font-medium text-gray-400">Already Funded</label>
                         <p className="text-white mt-1">{selectedProfile.alreadyFunded ? 'Yes' : 'No'}</p>
                       </div>
-                      {selectedProfile.fundingAmount && (
+                      {selectedProfile.alreadyFunded && selectedProfile.fundingAmount !== undefined && selectedProfile.fundingAmount > 0 && (
                         <div>
                           <label className="text-sm font-medium text-gray-400">Funding Amount</label>
                           <p className="text-white mt-1">₹{selectedProfile.fundingAmount.toLocaleString()}</p>
                         </div>
                       )}
-                      {selectedProfile.fundingSource && (
+                      {selectedProfile.alreadyFunded && selectedProfile.fundingSource && (
                         <div>
                           <label className="text-sm font-medium text-gray-400">Funding Source</label>
                           <p className="text-white mt-1">{selectedProfile.fundingSource}</p>
                         </div>
                       )}
-                      {selectedProfile.fundingDate && (
+                      {selectedProfile.alreadyFunded && selectedProfile.fundingDate && (
                         <div>
                           <label className="text-sm font-medium text-gray-400 flex items-center">
                             <Calendar className="h-4 w-4 mr-1" />

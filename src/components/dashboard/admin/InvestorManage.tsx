@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Plus, Edit, Trash2, Search, Filter, DollarSign, Mail, Phone, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, DollarSign, Mail, Phone, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import { Investor, CreateInvestorData } from '../../../types';
 import { useInvestors } from '../../../hooks/useInvestors';
 
@@ -364,7 +364,7 @@ const InvestorManage: React.FC = () => {
       )}
 
 
-      {/* Search and Filter */}
+      {/* Search */}
       <Card className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
@@ -378,15 +378,6 @@ const InvestorManage: React.FC = () => {
                 className="pl-10"
               />
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            <select className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
-              <option value="all">All Focus Areas</option>
-              <option value="saas">SaaS</option>
-              <option value="fintech">FinTech</option>
-              <option value="healthtech">HealthTech</option>
-            </select>
           </div>
         </div>
       </Card>

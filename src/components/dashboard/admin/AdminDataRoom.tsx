@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Search, Filter, Download, Eye, Trash2, FileText, AlertCircle, Loader2, X, Building2, ArrowLeft, FolderOpen } from 'lucide-react';
+import { Search, Filter, Download, Trash2, FileText, AlertCircle, Loader2, X, Building2, ArrowLeft, FolderOpen } from 'lucide-react';
 import { useStartups } from '../../../hooks/useStartups';
 import { useDocuments } from '../../../hooks/useDocuments';
 import { documentsApi } from '../../../services/documentsApi';
@@ -267,25 +267,11 @@ const AdminDataRoom: React.FC = () => {
                       <td className="py-4 px-4">
                         <div className="flex items-center space-x-2">
                           <button 
-                            className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
-                            title="View document"
-                            onClick={() => handleViewDocument(doc)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button 
                             className="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
                             title="Download document"
                             onClick={() => handleDownloadDocument(doc)}
                           >
                             <Download className="h-4 w-4" />
-                          </button>
-                          <button 
-                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                            title="Delete document"
-                            onClick={() => handleDeleteDocument(doc.id, doc.name)}
-                          >
-                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
