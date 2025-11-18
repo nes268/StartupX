@@ -3,7 +3,7 @@ import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import { Search, Filter, Building2, User, Mail, AlertCircle, Loader2, X, Phone, MapPin, Briefcase, FileText, DollarSign, Calendar, Users, Link as LinkIcon } from 'lucide-react';
-import { Startup, TRLLevel, Profile } from '../../../types';
+import { Startup, Profile } from '../../../types';
 import { useStartups } from '../../../hooks/useStartups';
 import { profileApi } from '../../../services/profileApi';
 
@@ -58,12 +58,6 @@ const StartupManage: React.FC = () => {
     };
   };
 
-  const getTRLColor = (level: TRLLevel) => {
-    if (level <= 3) return 'bg-red-500';
-    if (level <= 6) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active': return 'bg-green-900/30 text-green-400';
@@ -76,6 +70,12 @@ const StartupManage: React.FC = () => {
 
   const getTypeColor = (type: string) => {
     return type === 'incubation' ? 'bg-purple-900/30 text-purple-400' : 'bg-cyan-900/30 text-cyan-400';
+  };
+
+  const getTRLColor = (level: number) => {
+    if (level <= 3) return 'bg-red-500';
+    if (level <= 6) return 'bg-yellow-500';
+    return 'bg-green-500';
   };
 
   const handleStartupNameClick = async (startup: Startup) => {
@@ -284,7 +284,6 @@ const StartupManage: React.FC = () => {
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Sector</th>
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Type</th>
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Status</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">TRL Level</th>
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Email</th>
               </tr>
             </thead>
@@ -317,12 +316,6 @@ const StartupManage: React.FC = () => {
                     <span className={`text-xs px-2 py-1 rounded-full capitalize ${getStatusColor(startup.status)}`}>
                       {startup.status}
                     </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full ${getTRLColor(startup.trlLevel)}`} />
-                      <span className="text-white text-sm font-medium">TRL {startup.trlLevel}</span>
-                    </div>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center space-x-2">

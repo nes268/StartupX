@@ -7,7 +7,6 @@ import { useEvents } from '../../hooks/useEvents';
 
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
   const [showEventForm, setShowEventForm] = useState(false);
   
   // Use shared events API instead of local state
@@ -335,23 +334,10 @@ const Calendar: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex space-x-2">
-            {(['month', 'week', 'day'] as const).map((viewType) => (
-              <Button
-                key={viewType}
-                variant={view === viewType ? 'primary' : 'outline'}
-                size="sm"
-                onClick={() => setView(viewType)}
-                className="capitalize"
-              >
-                {viewType}
-              </Button>
-            ))}
-          </div>
         </div>
 
         {/* Calendar Grid */}
-        {view === 'month' && renderMonthView()}
+        {renderMonthView()}
       </Card>
 
       {/* Upcoming Events */}

@@ -23,7 +23,7 @@ class MockReportsApi {
         },
         {
           id: '2',
-          name: 'TRL Distribution Analysis Q4 2024',
+          name: 'Sector Distribution Analysis Q4 2024',
           type: 'Analytics Report',
           dateGenerated: '2025-01-15',
           fileSize: '1.8 MB',

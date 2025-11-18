@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { Presentation as PresentationChart, Upload, FileText, CheckCircle } from 'lucide-react';
+import { Presentation as PresentationChart, Upload, FileText, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { documentsApi } from '../../services/documentsApi';
 
 const PitchDeck: React.FC = () => {
+  const { user } = useAuth();
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const templates = [
     {
@@ -33,36 +38,63 @@ const PitchDeck: React.FC = () => {
     }
   ];
 
-  const processFile = (file: File, templateId?: string) => {
+  const getFileType = (fileName: string): string => {
+    const extension = fileName.split('.').pop()?.toLowerCase() || '';
+    return extension;
+  };
+
+  const processFile = async (file: File) => {
+    if (!user) {
+      alert('Please log in to upload files');
+      return;
+    }
+
+    if (!user.id) {
+      alert('User ID is missing. Please log out and log back in.');
+      return;
+    }
+
     // Validate file type
-    const allowedTypes = ['application/pdf', 'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
-    if (!allowedTypes.includes(file.type)) {
-      alert('Please upload a valid file format (PDF, PPT, PPTX)');
+    const allowedTypes = ['pdf', 'ppt', 'pptx'];
+    const fileType = getFileType(file.name);
+    
+    if (!allowedTypes.includes(fileType)) {
+      setUploadError('Please upload a valid file format (PDF, PPT, PPTX)');
       return;
     }
 
     // Validate file size (50MB)
     if (file.size > 50 * 1024 * 1024) {
-      alert('File size must be less than 50MB');
+      setUploadError('File size must be less than 50MB');
       return;
     }
 
-    const templateName = templateId ? templates.find(t => t.id === templateId)?.name : 'Custom Upload';
-    
-    // Here you would typically upload to backend
-    console.log('Uploading file:', file.name, 'Template:', templateName);
-    
-    setShowUploadForm(false);
-    setSelectedTemplate(null);
-    setShowSuccessMessage(true);
-    setTimeout(() => setShowSuccessMessage(false), 3000);
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      // Upload the file using documentsApi
+      await documentsApi.uploadDocument(file, user.id);
+      
+      setShowUploadForm(false);
+      setSelectedTemplate(null);
+      setShowSuccessMessage(true);
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setUploadError(error?.message || 'Error uploading file. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      processFile(file, selectedTemplate || undefined);
+      processFile(file);
     }
+    // Reset the input so the same file can be selected again
+    e.target.value = '';
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -81,13 +113,13 @@ const PitchDeck: React.FC = () => {
     setDragActive(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      processFile(e.dataTransfer.files[0], selectedTemplate || undefined);
+      processFile(e.dataTransfer.files[0]);
     }
   };
 
   const handleUseTemplate = (templateId: string) => {
-    setSelectedTemplate(templateId);
-    setShowUploadForm(true);
+    // Static button - show message that templates are coming soon
+    alert('Template feature coming soon! Please use "Upload Deck" to upload your pitch deck.');
   };
 
   return (
@@ -139,8 +171,10 @@ const PitchDeck: React.FC = () => {
                 <Button 
                   className="w-full" 
                   onClick={() => handleUseTemplate(template.id)}
+                  disabled
+                  variant="outline"
                 >
-                  Use This Template
+                  Use This Template (Coming Soon)
                 </Button>
               </div>
             </Card>
@@ -162,10 +196,7 @@ const PitchDeck: React.FC = () => {
           <Card className="p-6 max-w-md w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">
-                {selectedTemplate 
-                  ? `Upload Deck - ${templates.find(t => t.id === selectedTemplate)?.name} Template`
-                  : 'Upload Your Deck'
-                }
+                Upload Your Pitch Deck
               </h3>
               <button 
                 onClick={() => {
@@ -180,15 +211,13 @@ const PitchDeck: React.FC = () => {
               </button>
             </div>
             
-            {selectedTemplate && (
-              <div className="mb-4 p-4 bg-gray-700/30 rounded-lg border border-gray-600">
-                <p className="text-sm text-gray-300 mb-2">
-                  You can either:
-                </p>
-                <ul className="text-sm text-gray-400 space-y-1 list-disc list-inside">
-                  <li>Edit the template and upload your customized version</li>
-                  <li>Upload your own deck</li>
-                </ul>
+            {/* Error Display */}
+            {uploadError && (
+              <div className="mb-4 p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-400" />
+                  <p className="text-red-300 text-sm">{uploadError}</p>
+                </div>
               </div>
             )}
 
@@ -214,10 +243,22 @@ const PitchDeck: React.FC = () => {
                     type="file" 
                     accept=".pdf,.pptx,.ppt"
                     onChange={handleFileUpload}
+                    disabled={isUploading}
                     className="hidden"
                   />
-                  <Button variant="outline" className="cursor-pointer">
-                    Browse Files
+                  <Button 
+                    variant="outline" 
+                    className="cursor-pointer"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      'Browse Files'
+                    )}
                   </Button>
                 </label>
               </div>
@@ -229,8 +270,10 @@ const PitchDeck: React.FC = () => {
                 onClick={() => {
                   setShowUploadForm(false);
                   setSelectedTemplate(null);
+                  setUploadError(null);
                 }} 
                 className="w-full"
+                disabled={isUploading}
               >
                 Cancel
               </Button>

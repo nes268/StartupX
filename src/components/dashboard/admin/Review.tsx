@@ -141,12 +141,6 @@ const Review: React.FC = () => {
     setTimeout(() => setShowSuccessMessage(false), 2000);
   };
 
-  const getTRLColor = (level: number) => {
-    if (level <= 3) return 'bg-red-500';
-    if (level <= 6) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
   const getTypeColor = (type: string) => {
     return type === 'incubation' ? 'bg-blue-900/30 text-blue-400' : 'bg-purple-900/30 text-purple-400';
   };
@@ -222,13 +216,6 @@ const Review: React.FC = () => {
                       <span className={`text-xs px-2 py-1 rounded-full capitalize ${getStatusColor(selectedStartup.status)}`}>
                         {selectedStartup.status}
                       </span>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1">TRL Level</label>
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full ${getTRLColor(selectedStartup.trlLevel)}`} />
-                      <span className="text-white font-medium">TRL {selectedStartup.trlLevel}</span>
                     </div>
                   </div>
                   <div>
@@ -380,10 +367,6 @@ const Review: React.FC = () => {
                     <User className="h-4 w-4 mr-1" />
                     {startup.founder}
                   </p>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className={`w-2 h-2 rounded-full ${getTRLColor(startup.trlLevel)}`} />
-                  <span className="text-xs text-gray-400">TRL{startup.trlLevel}</span>
                 </div>
               </div>
 

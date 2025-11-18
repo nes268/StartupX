@@ -50,6 +50,8 @@ const AdminOverview: React.FC = () => {
   const [selectedSector, setSelectedSector] = useState('all');
   const [selectedStage, setSelectedStage] = useState('all');
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [hoveredSector, setHoveredSector] = useState<{ sector: string; percentage: number; count: number } | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
   // Calculate metrics from real data
   const metrics = useMemo(() => {
@@ -108,18 +110,18 @@ const AdminOverview: React.FC = () => {
       sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
     });
 
-    // Professional color palette for pie chart
+    // Vibrant color palette for charts
     const colors = [
-      { hex: '#8b5cf6', name: 'purple' }, // Purple
-      { hex: '#06b6d4', name: 'cyan' }, // Cyan
-      { hex: '#10b981', name: 'emerald' }, // Emerald
-      { hex: '#f59e0b', name: 'amber' }, // Amber
-      { hex: '#ef4444', name: 'red' }, // Red
-      { hex: '#3b82f6', name: 'blue' }, // Blue
-      { hex: '#ec4899', name: 'pink' }, // Pink
-      { hex: '#14b8a6', name: 'teal' }, // Teal
-      { hex: '#f97316', name: 'orange' }, // Orange
-      { hex: '#6366f1', name: 'indigo' }, // Indigo
+      { hex: '#8b5cf6', name: 'violet' }, // Violet-500
+      { hex: '#06b6d4', name: 'cyan' }, // Cyan-500
+      { hex: '#10b981', name: 'emerald' }, // Emerald-500
+      { hex: '#f59e0b', name: 'amber' }, // Amber-500
+      { hex: '#ec4899', name: 'pink' }, // Pink-500
+      { hex: '#3b82f6', name: 'blue' }, // Blue-500
+      { hex: '#14b8a6', name: 'teal' }, // Teal-500
+      { hex: '#f97316', name: 'orange' }, // Orange-500
+      { hex: '#6366f1', name: 'indigo' }, // Indigo-500
+      { hex: '#84cc16', name: 'lime' }, // Lime-500
     ];
 
     const sortedSectors = Object.entries(sectorCounts)
@@ -368,7 +370,21 @@ const AdminOverview: React.FC = () => {
               <div className="flex flex-col items-center justify-center w-full">
                 {/* Pie Chart SVG */}
                 <div className="relative mb-6">
-                  <svg width="280" height="280" viewBox="0 0 280 280" className="drop-shadow-lg">
+                  <svg 
+                    width="280" 
+                    height="280" 
+                    viewBox="0 0 280 280" 
+                    className="drop-shadow-lg"
+                    onMouseMove={(e) => {
+                      if (hoveredSector) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setTooltipPosition({
+                          x: e.clientX - rect.left,
+                          y: e.clientY - rect.top
+                        });
+                      }
+                    }}
+                  >
                     {sectorData.reduce((acc, item, index) => {
                       // Calculate percentage accurately
                       const percentage = totalStartups > 0 ? (item.count / totalStartups) * 100 : 0;
@@ -392,7 +408,34 @@ const AdminOverview: React.FC = () => {
                       const labelY = centerY + labelRadius * Math.sin(midAngleRad);
                       
                       const slice = (
-                        <g key={index} className="group cursor-pointer">
+                        <g 
+                          key={index} 
+                          className="group cursor-pointer"
+                          onMouseEnter={(e) => {
+                            const rect = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                            if (rect) {
+                              setTooltipPosition({
+                                x: e.clientX - rect.left,
+                                y: e.clientY - rect.top
+                              });
+                            }
+                            setHoveredSector({ 
+                              sector: item.sector, 
+                              percentage: percentage,
+                              count: item.count
+                            });
+                          }}
+                          onMouseMove={(e) => {
+                            const rect = e.currentTarget.ownerSVGElement?.getBoundingClientRect();
+                            if (rect) {
+                              setTooltipPosition({
+                                x: e.clientX - rect.left,
+                                y: e.clientY - rect.top
+                              });
+                            }
+                          }}
+                          onMouseLeave={() => setHoveredSector(null)}
+                        >
                           <path
                             d={createPieSlice(startAngle, endAngle, centerX, centerY, radius)}
                             fill={item.color}
@@ -401,7 +444,7 @@ const AdminOverview: React.FC = () => {
                             className="transition-all duration-300 group-hover:opacity-90 group-hover:brightness-110"
                             style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
                           />
-                          {/* Percentage label on slice - show if slice is large enough or if it's the only slice */}
+                          {/* Percentage label on slice */}
                           {(percentage > 3 || sectorData.length === 1) && (
                             <text
                               x={labelX}
@@ -425,10 +468,29 @@ const AdminOverview: React.FC = () => {
                       return acc;
                     }, { slices: [] as JSX.Element[], currentAngle: 0 }).slices}
                   </svg>
+                  
+                  {/* Tooltip */}
+                  {hoveredSector && (
+                    <div
+                      className="absolute pointer-events-none z-10 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 shadow-2xl min-w-[140px]"
+                      style={{
+                        left: `${Math.min(tooltipPosition.x + 15, 240)}px`,
+                        top: `${Math.max(tooltipPosition.y - 50, 10)}px`,
+                        transform: 'translateY(-100%)'
+                      }}
+                    >
+                      <div className="text-sm font-semibold text-white mb-1">
+                        {hoveredSector.sector}
+                      </div>
+                      <div className="text-xs text-gray-300">
+                        {hoveredSector.count} startup{hoveredSector.count !== 1 ? 's' : ''} ({hoveredSector.percentage.toFixed(1)}%)
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Legend */}
-                <div className="w-full max-w-md">
+                <div className="w-full max-w-md mt-6">
                   <div className="grid grid-cols-2 gap-3">
                     {sectorData.map((item, index) => {
                       const percentage = ((item.count / totalStartups) * 100).toFixed(1);
@@ -625,7 +687,6 @@ const AdminOverview: React.FC = () => {
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Sector</th>
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Type</th>
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Status</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">TRL Level</th>
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Submitted</th>
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Actions</th>
                     </tr>
@@ -655,9 +716,6 @@ const AdminOverview: React.FC = () => {
                         </td>
                         <td className="py-4 px-4">
                           {getStatusBadge(startup.status)}
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="text-gray-300">TRL {startup.trlLevel}</span>
                         </td>
                         <td className="py-4 px-4 text-gray-300">
                           {new Date(startup.submissionDate).toLocaleDateString()}

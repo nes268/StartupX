@@ -16,7 +16,7 @@ interface FundingContextType {
   currentStage: string;
   totalTargetAmount: number;
   totalRaisedAmount: number;
-  updateStageProgress: (stageId: string, progress: number, raisedAmount?: number) => void;
+  updateStageProgress: (stageId: string, progress: number, raisedAmount?: number, targetAmount?: number) => void;
   completeStage: (stageId: string) => void;
   setCurrentStage: (stageId: string) => void;
   updateFundingAmounts: (targetAmount: number, raisedAmount: number) => void;
@@ -91,13 +91,14 @@ export const FundingProvider: React.FC<{ children: ReactNode }> = ({ children })
   const totalTargetAmount = fundingStages.reduce((sum, stage) => sum + (stage.targetAmount || 0), 0);
   const totalRaisedAmount = fundingStages.reduce((sum, stage) => sum + (stage.raisedAmount || 0), 0);
 
-  const updateStageProgress = (stageId: string, progress: number, raisedAmount?: number) => {
+  const updateStageProgress = (stageId: string, progress: number, raisedAmount?: number, targetAmount?: number) => {
     setFundingStages(prev => prev.map(stage => 
       stage.id === stageId 
         ? { 
             ...stage, 
             progress: Math.min(100, Math.max(0, progress)),
-            raisedAmount: raisedAmount !== undefined ? raisedAmount : stage.raisedAmount
+            raisedAmount: raisedAmount !== undefined ? raisedAmount : stage.raisedAmount,
+            targetAmount: targetAmount !== undefined ? targetAmount : stage.targetAmount
           }
         : stage
     ));
