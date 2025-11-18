@@ -7,9 +7,11 @@ export interface UseDocumentsReturn {
   loading: boolean;
   error: string | null;
   createDocument: (documentData: CreateDocumentData) => Promise<Document>;
+  uploadDocument: (file: File, userId: string) => Promise<Document>;
   updateDocument: (documentData: UpdateDocumentData) => Promise<Document>;
   deleteDocument: (id: string) => Promise<void>;
-  refreshDocuments: () => Promise<void>;
+  refreshDocuments: (userId?: string) => Promise<void>;
+  getDocumentsByUserId: (userId: string) => Promise<Document[]>;
 }
 
 export const useDocuments = (): UseDocumentsReturn => {
@@ -17,17 +19,33 @@ export const useDocuments = (): UseDocumentsReturn => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDocuments = useCallback(async () => {
+  const fetchDocuments = useCallback(async (userId?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const documentsData = await documentsApi.getDocuments();
+      const documentsData = await documentsApi.getDocuments(userId);
       setDocuments(documentsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch documents');
       console.error('Error fetching documents:', err);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const uploadDocument = useCallback(async (file: File, userId: string): Promise<Document> => {
+    try {
+      setError(null);
+      const newDocument = await documentsApi.uploadDocument(file, userId);
+      
+      // Update local state
+      setDocuments(prev => [newDocument, ...prev]);
+      
+      return newDocument;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to upload document';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   }, []);
 
@@ -42,6 +60,17 @@ export const useDocuments = (): UseDocumentsReturn => {
       return newDocument;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create document';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    }
+  }, []);
+
+  const getDocumentsByUserId = useCallback(async (userId: string): Promise<Document[]> => {
+    try {
+      setError(null);
+      return await documentsApi.getDocumentsByUserId(userId);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch documents';
       setError(errorMessage);
       throw new Error(errorMessage);
     }
@@ -79,8 +108,8 @@ export const useDocuments = (): UseDocumentsReturn => {
     }
   }, []);
 
-  const refreshDocuments = useCallback(async (): Promise<void> => {
-    await fetchDocuments();
+  const refreshDocuments = useCallback(async (userId?: string): Promise<void> => {
+    await fetchDocuments(userId);
   }, [fetchDocuments]);
 
   useEffect(() => {
@@ -92,8 +121,10 @@ export const useDocuments = (): UseDocumentsReturn => {
     loading,
     error,
     createDocument,
+    uploadDocument,
     updateDocument,
     deleteDocument,
     refreshDocuments,
+    getDocumentsByUserId,
   };
 };

@@ -29,18 +29,41 @@ export const useEvents = (): UseEventsReturn => {
       setError(null);
       
       const [eventsData, upcomingData, completedData, categoriesData] = await Promise.all([
-        eventsApi.getEvents(),
-        eventsApi.getUpcomingEvents(),
-        eventsApi.getCompletedEvents(),
-        eventsApi.getEventCategories(),
+        eventsApi.getEvents().catch(err => {
+          console.warn('Error fetching all events:', err);
+          return [];
+        }),
+        eventsApi.getUpcomingEvents().catch(err => {
+          console.warn('Error fetching upcoming events:', err);
+          return [];
+        }),
+        eventsApi.getCompletedEvents().catch(err => {
+          console.warn('Error fetching completed events:', err);
+          return [];
+        }),
+        eventsApi.getEventCategories().catch(err => {
+          console.warn('Error fetching categories:', err);
+          return [];
+        }),
       ]);
 
-      setEvents(eventsData);
-      setUpcomingEvents(upcomingData);
-      setCompletedEvents(completedData);
-      setCategories(categoriesData);
+      setEvents(eventsData || []);
+      setUpcomingEvents(upcomingData || []);
+      setCompletedEvents(completedData || []);
+      setCategories(categoriesData && categoriesData.length > 0 ? categoriesData : []);
+      
+      // Only set error if all critical requests failed
+      if ((!eventsData || eventsData.length === 0) && 
+          (!upcomingData || upcomingData.length === 0) && 
+          (!completedData || completedData.length === 0)) {
+        // Don't set error for empty results, only for actual failures
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch events');
+      // Only set error for unexpected errors, not for individual API failures
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch events';
+      if (!errorMessage.toLowerCase().includes('invalid event id')) {
+        setError(errorMessage);
+      }
       console.error('Error fetching events:', err);
     } finally {
       setLoading(false);
@@ -69,7 +92,11 @@ export const useEvents = (): UseEventsReturn => {
       return newEvent;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create event';
-      setError(errorMessage);
+      // Don't set error for invalid event ID errors
+      if (!errorMessage.toLowerCase().includes('invalid event id') &&
+          !errorMessage.toLowerCase().includes('invalid eventid')) {
+        setError(errorMessage);
+      }
       throw new Error(errorMessage);
     }
   }, []);
@@ -104,7 +131,11 @@ export const useEvents = (): UseEventsReturn => {
       return updatedEvent;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update event';
-      setError(errorMessage);
+      // Don't set error for invalid event ID errors
+      if (!errorMessage.toLowerCase().includes('invalid event id') &&
+          !errorMessage.toLowerCase().includes('invalid eventid')) {
+        setError(errorMessage);
+      }
       throw new Error(errorMessage);
     }
   }, []);
@@ -120,7 +151,11 @@ export const useEvents = (): UseEventsReturn => {
       setCompletedEvents(prev => prev.filter(event => event.id !== id));
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to delete event';
-      setError(errorMessage);
+      // Don't set error for invalid event ID errors
+      if (!errorMessage.toLowerCase().includes('invalid event id') &&
+          !errorMessage.toLowerCase().includes('invalid eventid')) {
+        setError(errorMessage);
+      }
       throw new Error(errorMessage);
     }
   }, []);

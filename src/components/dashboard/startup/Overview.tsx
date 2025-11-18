@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../../ui/Card';
 import { 
   TrendingUp, 
@@ -10,16 +10,61 @@ import {
   Clock,
   AlertCircle,
   Loader2,
-  X
+  X,
+  Target
 } from 'lucide-react';
 import { useInvestors } from '../../../hooks/useInvestors';
 import { useFunding } from '../../../context/FundingContext';
 import { useAlerts } from '../../../context/AlertsContext';
+import { useAuth } from '../../../context/AuthContext';
+import { startupsApi } from '../../../services/startupsApi';
 
 const Overview: React.FC = () => {
+  const { user } = useAuth();
   const { investors, loading: investorsLoading, error: investorsError } = useInvestors();
   const { fundingStages } = useFunding();
   const { getUpcomingAlerts, markAsCompleted, deleteAlert } = useAlerts();
+  const [startupPhase, setStartupPhase] = useState<string | null>(null);
+  const [loadingPhase, setLoadingPhase] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user?.id) {
+        try {
+          setLoadingPhase(true);
+          
+          // Fetch startup phase
+          try {
+            const startups = await startupsApi.getStartups(user.id);
+            if (startups.length > 0 && startups[0].startupPhase) {
+              setStartupPhase(startups[0].startupPhase);
+            }
+          } catch (error) {
+            console.error('Error fetching startup phase:', error);
+          }
+        } finally {
+          setLoadingPhase(false);
+        }
+      } else {
+        setLoadingPhase(false);
+      }
+    };
+    fetchData();
+  }, [user?.id]);
+
+  const getPhaseLabel = (phase: string | null) => {
+    if (!phase) return 'Not Set';
+    const phaseMap: { [key: string]: string } = {
+      'idea': 'Idea Stage',
+      'seed': 'Seed Stage',
+      'series-a': 'Series A',
+      'series-b': 'Series B',
+      'series-c': 'Series C',
+      'growth': 'Growth Stage',
+      'exit': 'Exit Stage'
+    };
+    return phaseMap[phase] || phase;
+  };
 
   const alerts = getUpcomingAlerts(30); // Get alerts for next 30 days
 
@@ -152,9 +197,7 @@ const Overview: React.FC = () => {
                   <p className="text-sm text-gray-300 mb-2">{alert.description}</p>
                 )}
                 
-                <p className="text-sm text-gray-400 mb-3">{alert.date}</p>
-                
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-3">
                   <span className={`text-xs px-2 py-1 rounded-full border ${getPriorityColor(alert.priority)}`}>
                     {alert.priority}
                   </span>
@@ -174,6 +217,27 @@ const Overview: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* Startup Phase */}
+      {startupPhase && (
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Target className="h-5 w-5 text-cyan-400" />
+              <h2 className="text-lg font-semibold text-white">Startup Phase</h2>
+            </div>
+          </div>
+          <div className="mb-4">
+            <p className="text-xs text-gray-400 mb-1">Current Phase</p>
+            <p className="text-xl font-bold text-white">{getPhaseLabel(startupPhase)}</p>
+          </div>
+          <div className="pt-4 border-t border-gray-700">
+            <p className="text-xs text-gray-400">
+              Update in <span className="text-cyan-400">Settings</span> page
+            </p>
+          </div>
+        </Card>
+      )}
 
       {/* Milestones Timeline and Investor Suggestions Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -214,9 +278,6 @@ const Overview: React.FC = () => {
                       }`}>
                         {milestone.stage}
                       </h3>
-                      {milestone.date && (
-                        <p className="text-xs text-gray-400">{milestone.date}</p>
-                      )}
                     </div>
                     
                     <div className="flex items-center space-x-3">
@@ -264,17 +325,15 @@ const Overview: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {investors.slice(0, 3).map((investor) => (
-                <div key={investor.id} className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="h-10 w-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-medium">
+                <div key={investor.id} className="bg-gray-700/50 rounded-lg p-5 border border-gray-600 flex flex-col items-center text-center max-w-[200px] mx-auto min-h-[280px]">
+                  <div className="mb-4">
+                    <div className="h-16 w-16 bg-cyan-500 rounded-full flex items-center justify-center text-white font-medium mx-auto mb-3">
                       {investor.profilePicture}
                     </div>
-                    <div>
-                      <h3 className="text-white font-medium">{investor.name}</h3>
-                      <p className="text-sm text-gray-400">{investor.firm}</p>
-                    </div>
+                    <h3 className="text-white font-medium text-lg mb-1">{investor.name}</h3>
+                    <p className="text-sm text-gray-400">{investor.firm}</p>
                   </div>
-                  <p className="text-sm text-gray-300 mb-2">{investor.backgroundSummary}</p>
+                  <p className="text-sm text-gray-300 mb-3 flex-grow">{investor.backgroundSummary}</p>
                   <p className="text-xs text-gray-400 mb-4">Investment Range: {investor.investmentRange}</p>
                   <button className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
                     Request Intro

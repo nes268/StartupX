@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Search, Filter, Eye, Edit, Trash2, Building2, User, Mail } from 'lucide-react';
-import { Startup, TRLLevel } from '../../../types';
+import { Search, Filter, Building2, User, Mail, AlertCircle, Loader2, X, Phone, MapPin, Briefcase, FileText, DollarSign, Calendar, Users, Link as LinkIcon } from 'lucide-react';
+import { Startup, TRLLevel, Profile } from '../../../types';
+import { useStartups } from '../../../hooks/useStartups';
+import { profileApi } from '../../../services/profileApi';
 
 const StartupManage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -11,66 +13,25 @@ const StartupManage: React.FC = () => {
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterTRL, setFilterTRL] = useState('all');
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
-  const startups: Startup[] = [
-    {
-      id: '1',
-      name: 'EcoTech Solutions',
-      founder: 'Sarah Johnson',
-      sector: 'CleanTech',
-      type: 'incubation',
-      status: 'active',
-      trlLevel: 6,
-      email: 'sarah@ecotech.com',
-      submissionDate: '2024-09-15',
-    },
-    {
-      id: '2',
-      name: 'HealthAI Pro',
-      founder: 'Dr. Michael Chen',
-      sector: 'HealthTech',
-      type: 'innovation',
-      status: 'active',
-      trlLevel: 8,
-      email: 'michael@healthai.com',
-      submissionDate: '2024-08-20',
-    },
-    {
-      id: '3',
-      name: 'EduLearn Platform',
-      founder: 'Lisa Rodriguez',
-      sector: 'EdTech',
-      type: 'incubation',
-      status: 'completed',
-      trlLevel: 9,
-      email: 'lisa@edulearn.com',
-      submissionDate: '2024-01-10',
-    },
-    {
-      id: '4',
-      name: 'FinanceFlow',
-      founder: 'Robert Kim',
-      sector: 'FinTech',
-      type: 'innovation',
-      status: 'active',
-      trlLevel: 5,
-      email: 'robert@financeflow.com',
-      submissionDate: '2024-10-05',
-    },
-    {
-      id: '5',
-      name: 'FarmTech Innovations',
-      founder: 'Maria Garcia',
-      sector: 'AgriTech',
-      type: 'incubation',
-      status: 'dropout',
-      trlLevel: 3,
-      email: 'maria@farmtech.com',
-      submissionDate: '2024-06-12',
-    }
-  ];
+  const {
+    startups,
+    loading,
+    error,
+    refreshStartups,
+    updateStartup,
+    deleteStartup
+  } = useStartups();
 
-  const sectors = ['CleanTech', 'HealthTech', 'EdTech', 'FinTech', 'AgriTech', 'FoodTech', 'RetailTech', 'PropTech'];
+  // Extract unique sectors from startups, with fallback to common sectors
+  const defaultSectors = ['CleanTech', 'HealthTech', 'EdTech', 'FinTech', 'AgriTech', 'FoodTech', 'RetailTech', 'PropTech'];
+  const sectors = startups.length > 0 
+    ? Array.from(new Set(startups.map(s => s.sector))).sort()
+    : defaultSectors;
 
   const filteredStartups = startups.filter(startup => {
     const matchesSearch = 
@@ -118,21 +79,61 @@ const StartupManage: React.FC = () => {
     return type === 'incubation' ? 'bg-purple-900/30 text-purple-400' : 'bg-cyan-900/30 text-cyan-400';
   };
 
-  const handleView = (startupId: string) => {
-    console.log('View startup:', startupId);
-  };
+  const handleStartupNameClick = async (startup: Startup) => {
+    // Check if userId exists and is valid
+    if (!startup.userId || startup.userId === 'null' || startup.userId === 'undefined' || startup.userId.trim() === '') {
+      setShowProfileModal(true);
+      setLoadingProfile(false);
+      setProfileError('No user ID found for this startup. Profile may not be completed yet.');
+      setSelectedProfile(null);
+      return;
+    }
 
-  const handleEdit = (startupId: string) => {
-    console.log('Edit startup:', startupId);
-  };
+    setShowProfileModal(true);
+    setLoadingProfile(true);
+    setProfileError(null);
+    setSelectedProfile(null);
 
-  const handleDelete = (startupId: string) => {
-    if (window.confirm('Are you sure you want to delete this startup?')) {
-      console.log('Delete startup:', startupId);
+    try {
+      console.log('Fetching profile for userId:', startup.userId, 'Type:', typeof startup.userId);
+      const profile = await profileApi.getProfileByUserId(startup.userId);
+      console.log('Profile fetched successfully:', profile);
+      setSelectedProfile(profile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load profile details';
+      setProfileError(errorMessage);
+      // Don't close modal on error, let user see the error message
+    } finally {
+      setLoadingProfile(false);
     }
   };
 
+  const closeProfileModal = () => {
+    setShowProfileModal(false);
+    setSelectedProfile(null);
+    setProfileError(null);
+  };
+
   const metrics = getMetrics();
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Startup Management</h1>
+          <p className="text-gray-400 mt-1">Manage all startups in the platform</p>
+        </div>
+        
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center space-x-3">
+            <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+            <span className="text-gray-400">Loading startups...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -141,6 +142,27 @@ const StartupManage: React.FC = () => {
         <h1 className="text-3xl font-bold text-white">Startup Management</h1>
         <p className="text-gray-400 mt-1">Manage all startups in the platform</p>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <Card className="p-4 bg-red-900/20 border-red-500/50">
+          <div className="flex items-center space-x-3">
+            <AlertCircle className="h-5 w-5 text-red-400" />
+            <div>
+              <h3 className="text-red-400 font-medium">Error</h3>
+              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={refreshStartups}
+                className="mt-2 text-red-400 hover:text-red-300"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -274,14 +296,17 @@ const StartupManage: React.FC = () => {
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Status</th>
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">TRL Level</th>
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Email</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredStartups.map((startup) => (
                 <tr key={startup.id} className="border-b border-gray-800 hover:bg-gray-700/20">
                   <td className="py-3 px-4">
-                    <div className="flex items-center space-x-3">
+                    <div 
+                      className="flex items-center space-x-3 cursor-pointer hover:text-cyan-400 transition-colors"
+                      onClick={() => handleStartupNameClick(startup)}
+                      title="Click to view profile details"
+                    >
                       <Building2 className="h-5 w-5 text-cyan-400" />
                       <span className="text-white font-medium">{startup.name}</span>
                     </div>
@@ -315,34 +340,6 @@ const StartupManage: React.FC = () => {
                       <span className="text-gray-300 text-sm">{startup.email}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleView(startup.id)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleEdit(startup.id)}
-                        className="text-cyan-400 hover:text-cyan-300"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => handleDelete(startup.id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -357,6 +354,284 @@ const StartupManage: React.FC = () => {
           </div>
         )}
       </Card>
+
+      {/* Profile Details Modal */}
+      {showProfileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">Startup Profile Details</h2>
+                <Button variant="ghost" size="sm" onClick={closeProfileModal}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {loadingProfile ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="flex items-center space-x-3">
+                    <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+                    <span className="text-gray-400">Loading profile...</span>
+                  </div>
+                </div>
+              ) : profileError ? (
+                <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="h-5 w-5 text-red-400" />
+                    <p className="text-red-300">{profileError}</p>
+                  </div>
+                </div>
+              ) : selectedProfile ? (
+                <div className="space-y-6">
+                  {/* Step 1: Personal Information */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <User className="h-5 w-5 mr-2 text-cyan-400" />
+                      Personal Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Full Name</label>
+                        <p className="text-white mt-1">{selectedProfile.fullName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400 flex items-center">
+                          <Mail className="h-4 w-4 mr-1" />
+                          Email
+                        </label>
+                        <p className="text-white mt-1">{selectedProfile.email}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400 flex items-center">
+                          <Phone className="h-4 w-4 mr-1" />
+                          Phone Number
+                        </label>
+                        <p className="text-white mt-1">{selectedProfile.phoneNumber}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400 flex items-center">
+                          <MapPin className="h-4 w-4 mr-1" />
+                          Location
+                        </label>
+                        <p className="text-white mt-1">{selectedProfile.location}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 2: Enterprise Information */}
+                  <div className="border-t border-gray-700 pt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <Briefcase className="h-5 w-5 mr-2 text-cyan-400" />
+                      Enterprise Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Startup Name</label>
+                        <p className="text-white mt-1">{selectedProfile.startupName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Entity Type</label>
+                        <p className="text-white mt-1">{selectedProfile.entityType}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Application Type</label>
+                        <p className="text-white mt-1 capitalize">{selectedProfile.applicationType}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Sector</label>
+                        <p className="text-white mt-1">{selectedProfile.sector}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Founder Name</label>
+                        <p className="text-white mt-1">{selectedProfile.founderName}</p>
+                      </div>
+                      {selectedProfile.coFounderNames && selectedProfile.coFounderNames.length > 0 && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-400 flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            Co-Founders
+                          </label>
+                          <p className="text-white mt-1">{selectedProfile.coFounderNames.join(', ')}</p>
+                        </div>
+                      )}
+                      {selectedProfile.linkedinProfile && (
+                        <div className="md:col-span-2">
+                          <label className="text-sm font-medium text-gray-400 flex items-center">
+                            <LinkIcon className="h-4 w-4 mr-1" />
+                            LinkedIn Profile
+                          </label>
+                          <a href={selectedProfile.linkedinProfile} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 mt-1 block">
+                            {selectedProfile.linkedinProfile}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Step 3: Incubation Details */}
+                  {selectedProfile.previouslyIncubated && (
+                    <div className="border-t border-gray-700 pt-6">
+                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                        <Building2 className="h-5 w-5 mr-2 text-cyan-400" />
+                        Incubation Details
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedProfile.incubatorName && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-400">Incubator Name</label>
+                            <p className="text-white mt-1">{selectedProfile.incubatorName}</p>
+                          </div>
+                        )}
+                        {selectedProfile.incubatorLocation && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-400">Incubator Location</label>
+                            <p className="text-white mt-1">{selectedProfile.incubatorLocation}</p>
+                          </div>
+                        )}
+                        {selectedProfile.incubationDuration && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-400">Duration</label>
+                            <p className="text-white mt-1">{selectedProfile.incubationDuration}</p>
+                          </div>
+                        )}
+                        {selectedProfile.incubatorType && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-400">Incubator Type</label>
+                            <p className="text-white mt-1">{selectedProfile.incubatorType}</p>
+                          </div>
+                        )}
+                        {selectedProfile.incubationMode && (
+                          <div>
+                            <label className="text-sm font-medium text-gray-400">Incubation Mode</label>
+                            <p className="text-white mt-1 capitalize">{selectedProfile.incubationMode}</p>
+                          </div>
+                        )}
+                        {selectedProfile.supportsReceived && selectedProfile.supportsReceived.length > 0 && (
+                          <div className="md:col-span-2">
+                            <label className="text-sm font-medium text-gray-400">Supports Received</label>
+                            <p className="text-white mt-1">{selectedProfile.supportsReceived.join(', ')}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 4: Documentation */}
+                  <div className="border-t border-gray-700 pt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-cyan-400" />
+                      Documentation
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Aadhaar Document</label>
+                        <p className="text-white mt-1 text-sm">{selectedProfile.aadhaarDoc ? 'Uploaded' : 'Not provided'}</p>
+                      </div>
+                      {selectedProfile.incorporationCert && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-400">Incorporation Certificate</label>
+                          <p className="text-white mt-1 text-sm">Uploaded</p>
+                        </div>
+                      )}
+                      {selectedProfile.msmeCert && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-400">MSME Certificate</label>
+                          <p className="text-white mt-1 text-sm">Uploaded</p>
+                        </div>
+                      )}
+                      {selectedProfile.dpiitCert && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-400">DPIIT Certificate</label>
+                          <p className="text-white mt-1 text-sm">Uploaded</p>
+                        </div>
+                      )}
+                      {selectedProfile.mouPartnership && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-400">MOU/Partnership</label>
+                          <p className="text-white mt-1 text-sm">Uploaded</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Step 5: Pitch Deck & Traction */}
+                  <div className="border-t border-gray-700 pt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <FileText className="h-5 w-5 mr-2 text-cyan-400" />
+                      Pitch Deck & Traction
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Business Documents</label>
+                        {selectedProfile.businessDocuments && selectedProfile.businessDocuments.length > 0 ? (
+                          <p className="text-white mt-1 text-sm">{selectedProfile.businessDocuments.length} document(s) uploaded</p>
+                        ) : (
+                          <p className="text-gray-500 mt-1 text-sm">No documents uploaded</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Traction Details</label>
+                        {selectedProfile.tractionDetails && selectedProfile.tractionDetails.length > 0 ? (
+                          <ul className="list-disc list-inside text-white mt-1 text-sm space-y-1">
+                            {selectedProfile.tractionDetails.map((detail, index) => (
+                              <li key={index}>{detail}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-gray-500 mt-1 text-sm">No traction details provided</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Balance Sheet</label>
+                        <p className="text-white mt-1 text-sm">{selectedProfile.balanceSheet ? 'Uploaded' : 'Not uploaded'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Step 6: Funding Information */}
+                  <div className="border-t border-gray-700 pt-6">
+                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                      <DollarSign className="h-5 w-5 mr-2 text-cyan-400" />
+                      Funding Information
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Funding Stage</label>
+                        <p className="text-white mt-1">{selectedProfile.fundingStage}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-400">Already Funded</label>
+                        <p className="text-white mt-1">{selectedProfile.alreadyFunded ? 'Yes' : 'No'}</p>
+                      </div>
+                      {selectedProfile.fundingAmount && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-400">Funding Amount</label>
+                          <p className="text-white mt-1">₹{selectedProfile.fundingAmount.toLocaleString()}</p>
+                        </div>
+                      )}
+                      {selectedProfile.fundingSource && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-400">Funding Source</label>
+                          <p className="text-white mt-1">{selectedProfile.fundingSource}</p>
+                        </div>
+                      )}
+                      {selectedProfile.fundingDate && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-400 flex items-center">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            Funding Date
+                          </label>
+                          <p className="text-white mt-1">{selectedProfile.fundingDate}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

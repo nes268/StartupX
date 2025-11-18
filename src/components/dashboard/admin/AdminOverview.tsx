@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import { useNotifications } from '../../../context/NotificationsContext';
+import { useStartups } from '../../../hooks/useStartups';
 import { 
   Building2, 
   Users, 
@@ -14,68 +15,125 @@ import {
   X,
   Eye,
   Edit,
-  Trash2
+  Trash2,
+  Loader2,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
+import { Startup } from '../../../types';
 
 const AdminOverview: React.FC = () => {
   const { 
     getRecentNotifications, 
     getUnreadCount, 
     markAsRead, 
-    deleteNotification 
+    deleteNotification,
+    refreshNotifications
   } = useNotifications();
+  
+  const { startups, loading, error, refreshStartups, updateStartup } = useStartups();
+
+  // Refresh notifications when component mounts and periodically
+  useEffect(() => {
+    refreshNotifications();
+    // Refresh notifications every 30 seconds to get new signups and update times
+    const interval = setInterval(() => {
+      refreshNotifications();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [refreshNotifications]);
   
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSector, setSelectedSector] = useState('all');
   const [selectedStage, setSelectedStage] = useState('all');
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
-  const metrics = [
-    { 
-      title: 'Total Startups', 
-      value: '156', 
-      icon: Building2, 
-      color: 'text-blue-400',
-      type: 'total'
-    },
-    { 
-      title: 'Incubation Startups', 
-      value: '89', 
-      icon: TrendingUp, 
-      color: 'text-green-400',
-      type: 'incubation'
-    },
-    { 
-      title: 'Innovation Startups', 
-      value: '67', 
-      icon: Users, 
-      color: 'text-cyan-400',
-      type: 'innovation'
-    },
-    { 
-      title: 'Dropout Startups', 
-      value: '12', 
-      icon: AlertTriangle, 
-      color: 'text-red-400',
-      type: 'dropout'
-    },
-  ];
+  // Calculate metrics from real data
+  const metrics = useMemo(() => {
+    const total = startups.length;
+    const incubation = startups.filter(s => s.type === 'incubation').length;
+    const innovation = startups.filter(s => s.type === 'innovation').length;
+    const dropout = startups.filter(s => s.status === 'dropout').length;
+    const pending = startups.filter(s => s.status === 'pending').length;
 
-  // Mock startup data
-  const startups = [
-    { id: '1', name: 'TechCorp Solutions', sector: 'Technology', stage: 'Incubation', status: 'Active', founded: '2023-01-15', employees: 25 },
-    { id: '2', name: 'GreenEnergy Co', sector: 'CleanTech', stage: 'Innovation', status: 'Active', founded: '2023-03-22', employees: 18 },
-    { id: '3', name: 'HealthTech Innovations', sector: 'Healthcare', stage: 'Incubation', status: 'Active', founded: '2023-02-10', employees: 32 },
-    { id: '4', name: 'FinTech Startup', sector: 'Finance', stage: 'Innovation', status: 'Active', founded: '2023-04-05', employees: 15 },
-    { id: '5', name: 'EduTech Platform', sector: 'Education', stage: 'Incubation', status: 'Active', founded: '2023-01-28', employees: 22 },
-    { id: '6', name: 'AgriTech Solutions', sector: 'Agriculture', stage: 'Innovation', status: 'Active', founded: '2023-03-15', employees: 12 },
-    { id: '7', name: 'RetailTech App', sector: 'Retail', stage: 'Incubation', status: 'Inactive', founded: '2022-11-20', employees: 8 },
-    { id: '8', name: 'LogisticsAI', sector: 'Logistics', stage: 'Innovation', status: 'Active', founded: '2023-02-18', employees: 28 },
-  ];
+    return [
+      { 
+        title: 'Total Startups', 
+        value: total.toString(), 
+        icon: Building2, 
+        color: 'text-blue-400',
+        type: 'total'
+      },
+      { 
+        title: 'Incubation Startups', 
+        value: incubation.toString(), 
+        icon: TrendingUp, 
+        color: 'text-green-400',
+        type: 'incubation'
+      },
+      { 
+        title: 'Innovation Startups', 
+        value: innovation.toString(), 
+        icon: Users, 
+        color: 'text-cyan-400',
+        type: 'innovation'
+      },
+      { 
+        title: 'Pending Approval', 
+        value: pending.toString(), 
+        icon: AlertTriangle, 
+        color: 'text-yellow-400',
+        type: 'pending'
+      },
+    ];
+  }, [startups]);
 
-  const sectors = ['Technology', 'CleanTech', 'Healthcare', 'Finance', 'Education', 'Agriculture', 'Retail', 'Logistics'];
+  // Get unique sectors from startups
+  const sectors = useMemo(() => {
+    const uniqueSectors = Array.from(new Set(startups.map(s => s.sector))).sort();
+    return uniqueSectors;
+  }, [startups]);
+
   const stages = ['Incubation', 'Innovation'];
+
+  // Calculate TRL distribution
+  const trlData = useMemo(() => {
+    const trl1to3 = startups.filter(s => s.trlLevel >= 1 && s.trlLevel <= 3).length;
+    const trl4to6 = startups.filter(s => s.trlLevel >= 4 && s.trlLevel <= 6).length;
+    const trl7to9 = startups.filter(s => s.trlLevel >= 7 && s.trlLevel <= 9).length;
+
+    return [
+      { level: 'TRL 1-3', count: trl1to3, color: 'bg-gradient-to-t from-purple-600 to-purple-500', hexColor: '#8b5cf6', description: 'Basic Research' },
+      { level: 'TRL 4-6', count: trl4to6, color: 'bg-gradient-to-t from-cyan-600 to-cyan-500', hexColor: '#06b6d4', description: 'Technology Development' },
+      { level: 'TRL 7-9', count: trl7to9, color: 'bg-gradient-to-t from-emerald-600 to-emerald-500', hexColor: '#10b981', description: 'System Demo & Deployment' },
+    ];
+  }, [startups]);
+
+  const handleApproveStartup = async (startupId: string) => {
+    setUpdatingStatus(startupId);
+    try {
+      await updateStartup(startupId, { status: 'active' });
+      await refreshStartups();
+    } catch (error) {
+      console.error('Error approving startup:', error);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
+
+  const handleRejectStartup = async (startupId: string) => {
+    setUpdatingStatus(startupId);
+    try {
+      await updateStartup(startupId, { status: 'dropout' });
+      await refreshStartups();
+    } catch (error) {
+      console.error('Error rejecting startup:', error);
+    } finally {
+      setUpdatingStatus(null);
+    }
+  };
 
   const handleMetricClick = (metricType: string) => {
     setSelectedMetric(metricType);
@@ -90,23 +148,24 @@ const AdminOverview: React.FC = () => {
     setSelectedMetric(null);
   };
 
-  const getFilteredStartups = () => {
-    let filtered = startups;
+  const getFilteredStartups = (): Startup[] => {
+    let filtered = [...startups];
 
     // Filter by metric type
     if (selectedMetric === 'incubation') {
-      filtered = filtered.filter(startup => startup.stage === 'Incubation');
+      filtered = filtered.filter(startup => startup.type === 'incubation');
     } else if (selectedMetric === 'innovation') {
-      filtered = filtered.filter(startup => startup.stage === 'Innovation');
-    } else if (selectedMetric === 'dropout') {
-      filtered = filtered.filter(startup => startup.status === 'Inactive');
+      filtered = filtered.filter(startup => startup.type === 'innovation');
+    } else if (selectedMetric === 'pending') {
+      filtered = filtered.filter(startup => startup.status === 'pending');
     }
 
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(startup => 
         startup.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        startup.sector.toLowerCase().includes(searchTerm.toLowerCase())
+        startup.sector.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        startup.founder.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -117,7 +176,8 @@ const AdminOverview: React.FC = () => {
 
     // Apply stage filter
     if (selectedStage !== 'all') {
-      filtered = filtered.filter(startup => startup.stage === selectedStage);
+      const stageType = selectedStage.toLowerCase() as 'incubation' | 'innovation';
+      filtered = filtered.filter(startup => startup.type === stageType);
     }
 
     return filtered;
@@ -128,23 +188,88 @@ const AdminOverview: React.FC = () => {
       case 'total': return 'All Startups';
       case 'incubation': return 'Incubation Startups';
       case 'innovation': return 'Innovation Startups';
-      case 'dropout': return 'Dropout Startups';
+      case 'pending': return 'Pending Approval';
       default: return 'Startups';
     }
+  };
+
+  const getStatusBadge = (status: Startup['status']) => {
+    const statusConfig = {
+      pending: { bg: 'bg-yellow-900/30', text: 'text-yellow-400', label: 'Pending' },
+      active: { bg: 'bg-green-900/30', text: 'text-green-400', label: 'Active' },
+      completed: { bg: 'bg-blue-900/30', text: 'text-blue-400', label: 'Completed' },
+      dropout: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Dropout' }
+    };
+    const config = statusConfig[status] || statusConfig.pending;
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs ${config.bg} ${config.text}`}>
+        {config.label}
+      </span>
+    );
+  };
+
+  const getTypeBadge = (type: Startup['type']) => {
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs ${
+        type === 'incubation' 
+          ? 'bg-green-900/30 text-green-400' 
+          : 'bg-blue-900/30 text-blue-400'
+      }`}>
+        {type === 'incubation' ? 'Incubation' : 'Innovation'}
+      </span>
+    );
   };
 
   // Get dynamic notifications
   const notifications = getRecentNotifications(5);
   const unreadCount = getUnreadCount();
 
-  // Mock data for TRL distribution
-  const trlData = [
-    { level: 'TRL 1-3', count: 45, color: 'bg-gradient-to-t from-purple-600 to-purple-500', hexColor: '#8b5cf6', description: 'Basic Research' },
-    { level: 'TRL 4-6', count: 78, color: 'bg-gradient-to-t from-cyan-600 to-cyan-500', hexColor: '#06b6d4', description: 'Technology Development' },
-    { level: 'TRL 7-9', count: 33, color: 'bg-gradient-to-t from-emerald-600 to-emerald-500', hexColor: '#10b981', description: 'System Demo & Deployment' },
-  ];
+  const maxCount = Math.max(...trlData.map(d => d.count), 1);
 
-  const maxCount = Math.max(...trlData.map(d => d.count));
+  if (loading) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
+          <p className="text-gray-400">Overview of platform metrics and recent activity</p>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center space-x-3">
+            <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
+            <span className="text-gray-400">Loading dashboard data...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8">
+        <div>
+          <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
+          <p className="text-gray-400">Overview of platform metrics and recent activity</p>
+        </div>
+        <Card className="p-6 bg-red-900/20 border-red-500/50">
+          <div className="flex items-center space-x-3">
+            <AlertTriangle className="h-5 w-5 text-red-400" />
+            <div>
+              <h3 className="text-red-400 font-medium">Error</h3>
+              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={refreshStartups}
+                className="mt-2 text-red-400 hover:text-red-300"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -177,13 +302,13 @@ const AdminOverview: React.FC = () => {
         ))}
       </div>
 
-      {/* Three Column Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* TRL Distribution Bar Chart - Left */}
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* TRL Distribution Bar Chart */}
         <Card className="p-6 h-full flex flex-col">
           <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
             <BarChart3 className="h-5 w-5 mr-2" />
-            TRL Distribution
+            TRL Level Distribution
           </h2>
           
           {/* Bar Chart Container - Takes remaining space */}
@@ -204,7 +329,7 @@ const AdminOverview: React.FC = () => {
                   {/* Bar */}
                   <div 
                     className={`w-full max-w-16 ${item.color} rounded-t-lg transition-all duration-500 hover:opacity-80 relative group`}
-                    style={{ height: `${(item.count / maxCount) * 200}px` }}
+                    style={{ height: maxCount > 0 ? `${(item.count / maxCount) * 200}px` : '0px', minHeight: item.count > 0 ? '4px' : '0px' }}
                   >
                     {/* Enhanced Hover tooltip */}
                     <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-3 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity z-10 min-w-48 shadow-lg border border-gray-600">
@@ -216,7 +341,10 @@ const AdminOverview: React.FC = () => {
                           {item.description}
                         </div>
                         <div className="text-xs text-gray-500 mt-1">
-                          {((item.count / trlData.reduce((sum, d) => sum + d.count, 0)) * 100).toFixed(1)}% of total
+                          {(() => {
+                            const total = trlData.reduce((sum, d) => sum + d.count, 0);
+                            return total > 0 ? `${((item.count / total) * 100).toFixed(1)}% of total` : '0% of total';
+                          })()}
                         </div>
                       </div>
                       {/* Tooltip arrow */}
@@ -239,81 +367,6 @@ const AdminOverview: React.FC = () => {
           </div>
         </Card>
 
-        {/* Startup Categories Pie Chart - Middle */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-white mb-6">Startup Categories</h2>
-          <div className="flex flex-col items-center justify-center min-h-80">
-            {/* Pie Chart */}
-            <div className="relative w-56 h-56 mb-4">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                {(() => {
-                  const total = trlData.reduce((sum, d) => sum + d.count, 0);
-                  let cumulativePercentage = 0;
-                  
-                  return trlData.map((item, index) => {
-                    const percentage = (item.count / total) * 100;
-                    const startAngle = (cumulativePercentage / 100) * 360;
-                    const endAngle = ((cumulativePercentage + percentage) / 100) * 360;
-                    
-                    const radius = 80;
-                    const centerX = 100;
-                    const centerY = 100;
-                    
-                    const startAngleRad = (startAngle * Math.PI) / 180;
-                    const endAngleRad = (endAngle * Math.PI) / 180;
-                    
-                    const x1 = centerX + radius * Math.cos(startAngleRad);
-                    const y1 = centerY + radius * Math.sin(startAngleRad);
-                    const x2 = centerX + radius * Math.cos(endAngleRad);
-                    const y2 = centerY + radius * Math.sin(endAngleRad);
-                    
-                    const largeArcFlag = percentage > 50 ? 1 : 0;
-                    
-                    const pathData = [
-                      `M ${centerX} ${centerY}`,
-                      `L ${x1} ${y1}`,
-                      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                      'Z'
-                    ].join(' ');
-                    
-                    cumulativePercentage += percentage;
-                    
-                    return (
-                      <path
-                        key={index}
-                        d={pathData}
-                        className="hover:opacity-80 transition-opacity cursor-pointer"
-                        fill={item.hexColor}
-                      />
-                    );
-                  });
-                })()}
-                
-                {/* Center circle */}
-                <circle cx="100" cy="100" r="40" fill="#1f2937" />
-              </svg>
-          </div>
-          
-            {/* Legend */}
-            <div className="space-y-3 w-full">
-              {trlData.map((item, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <div 
-                    className="w-4 h-4 rounded-full flex-shrink-0" 
-                    style={{ backgroundColor: item.hexColor }}
-                  ></div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-white font-medium text-sm">{item.level}</div>
-                    <div className="text-gray-400 text-xs">
-                      {item.count} ({((item.count / trlData.reduce((sum, d) => sum + d.count, 0)) * 100).toFixed(1)}%)
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-
         {/* Recent Notifications - Right */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
@@ -326,14 +379,23 @@ const AdminOverview: React.FC = () => {
                 </span>
               )}
             </h2>
-            {unreadCount > 0 && (
+            <div className="flex items-center gap-3">
               <button
-                onClick={() => notifications.forEach(n => !n.read && markAsRead(n.id))}
-                className="text-xs text-cyan-400 hover:text-cyan-300"
+                onClick={() => refreshNotifications()}
+                className="text-xs text-gray-400 hover:text-cyan-400 transition-colors"
+                title="Refresh notifications"
               >
-                Mark all as read
+                Refresh
               </button>
-            )}
+              {unreadCount > 0 && (
+                <button
+                  onClick={() => notifications.forEach(n => !n.read && markAsRead(n.id))}
+                  className="text-xs text-cyan-400 hover:text-cyan-300"
+                >
+                  Mark all as read
+                </button>
+              )}
+            </div>
           </div>
           <div className="space-y-4">
             {notifications.length === 0 ? (
@@ -361,13 +423,20 @@ const AdminOverview: React.FC = () => {
                     'bg-gray-400'
                   }`} />
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm ${notification.read ? 'text-gray-300' : 'text-white font-medium'}`}>
-                      {notification.message}
-                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className={`text-sm flex-1 ${notification.read ? 'text-gray-300' : 'text-white font-medium'}`}>
+                        {notification.type === 'signup' && !notification.read && (
+                          <span className="inline-block mr-2 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded">
+                            New Applicant
+                          </span>
+                        )}
+                        {notification.message}
+                      </p>
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                    {notification.userName && (
+                    {notification.userName && notification.userEmail && (
                       <p className="text-xs text-gray-400 mt-1">
-                        User: {notification.userName} ({notification.userEmail})
+                        {notification.userName} • {notification.userEmail}
                       </p>
                     )}
                   </div>
@@ -450,7 +519,7 @@ const AdminOverview: React.FC = () => {
               {/* Results Count */}
               <div className="mb-4">
                 <p className="text-gray-400">
-                  Showing {getFilteredStartups().length} of {startups.length} startups
+                  Showing {getFilteredStartups().length} of {startups.length} startup{startups.length !== 1 ? 's' : ''}
                 </p>
               </div>
 
@@ -460,11 +529,12 @@ const AdminOverview: React.FC = () => {
                   <thead>
                     <tr className="border-b border-gray-700">
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Startup Name</th>
+                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Founder</th>
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Sector</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Stage</th>
+                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Type</th>
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Status</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Founded</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Employees</th>
+                      <th className="text-left py-3 px-4 text-gray-300 font-medium">TRL Level</th>
+                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Submitted</th>
                       <th className="text-left py-3 px-4 text-gray-300 font-medium">Actions</th>
                     </tr>
                   </thead>
@@ -478,52 +548,63 @@ const AdminOverview: React.FC = () => {
                             </div>
                             <div>
                               <span className="text-white font-medium">{startup.name}</span>
-                              <div className="text-xs text-gray-400">ID: {startup.id}</div>
+                              <div className="text-xs text-gray-400">{startup.email}</div>
                             </div>
                           </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-gray-300">{startup.founder}</span>
                         </td>
                         <td className="py-4 px-4">
                           <span className="text-gray-300">{startup.sector}</span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            startup.stage === 'Incubation' 
-                              ? 'bg-green-900/30 text-green-400' 
-                              : 'bg-blue-900/30 text-blue-400'
-                          }`}>
-                            {startup.stage}
-                          </span>
+                          {getTypeBadge(startup.type)}
                         </td>
                         <td className="py-4 px-4">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            startup.status === 'Active' 
-                              ? 'bg-green-900/30 text-green-400' 
-                              : 'bg-red-900/30 text-red-400'
-                          }`}>
-                            {startup.status}
-                          </span>
+                          {getStatusBadge(startup.status)}
                         </td>
-                        <td className="py-4 px-4 text-gray-300">{startup.founded}</td>
-                        <td className="py-4 px-4 text-gray-300">{startup.employees}</td>
+                        <td className="py-4 px-4">
+                          <span className="text-gray-300">TRL {startup.trlLevel}</span>
+                        </td>
+                        <td className="py-4 px-4 text-gray-300">
+                          {new Date(startup.submissionDate).toLocaleDateString()}
+                        </td>
                         <td className="py-4 px-4">
                           <div className="flex items-center space-x-2">
+                            {startup.status === 'pending' && (
+                              <>
+                                <button 
+                                  onClick={() => handleApproveStartup(startup.id)}
+                                  disabled={updatingStatus === startup.id}
+                                  className="p-2 text-gray-400 hover:text-green-400 hover:bg-green-400/10 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Approve startup"
+                                >
+                                  {updatingStatus === startup.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <CheckCircle className="h-4 w-4" />
+                                  )}
+                                </button>
+                                <button 
+                                  onClick={() => handleRejectStartup(startup.id)}
+                                  disabled={updatingStatus === startup.id}
+                                  className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors disabled:opacity-50"
+                                  title="Reject startup"
+                                >
+                                  {updatingStatus === startup.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4" />
+                                  )}
+                                </button>
+                              </>
+                            )}
                             <button 
                               className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
                               title="View details"
                             >
                               <Eye className="h-4 w-4" />
-                            </button>
-                            <button 
-                              className="p-2 text-gray-400 hover:text-yellow-400 hover:bg-yellow-400/10 rounded-lg transition-colors"
-                              title="Edit startup"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button 
-                              className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
-                              title="Delete startup"
-                            >
-                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
                         </td>

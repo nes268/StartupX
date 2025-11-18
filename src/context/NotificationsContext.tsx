@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 
 export interface AdminNotification {
   id: string;
@@ -16,11 +17,12 @@ export interface AdminNotification {
 interface NotificationsContextType {
   notifications: AdminNotification[];
   addNotification: (notification: Omit<AdminNotification, 'id' | 'createdAt' | 'read'>) => void;
-  markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
+  markAsRead: (id: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
   deleteNotification: (id: string) => void;
   getUnreadCount: () => number;
   getRecentNotifications: (limit?: number) => AdminNotification[];
+  refreshNotifications: () => Promise<void>;
   // Specific notification creators
   createSignupNotification: (userName: string, userEmail: string, userRole: 'user' | 'admin') => void;
   createApplicationNotification: (startupName: string, founderName: string, sector: string) => void;
@@ -29,51 +31,85 @@ interface NotificationsContextType {
   createReviewNotification: (startupName: string, reviewType: string) => void;
 }
 
-const initialNotifications: AdminNotification[] = [
-  {
-    id: '1',
-    message: 'New startup application from TechCorp',
-    time: '2 hours ago',
-    type: 'application',
-    userId: 'user1',
-    userName: 'John Smith',
-    userEmail: 'john@techcorp.com',
-      userRole: 'user',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    read: false
-  },
-  {
-    id: '2',
-    message: 'Monthly report generation completed',
-    time: '4 hours ago',
-    type: 'info',
-    createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    read: false
-  },
-  {
-    id: '3',
-    message: 'Mentor session feedback submitted',
-    time: '6 hours ago',
-    type: 'feedback',
-    userName: 'Dr. Sarah Johnson',
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    read: true
-  },
-  {
-    id: '4',
-    message: 'Investment proposal requires review',
-    time: '1 day ago',
-    type: 'review',
-    userName: 'Mike Chen',
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    read: true
-  }
-];
-
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
 
+// Helper function to format time relative to now
+const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) {
+    return 'Just now';
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) {
+    return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+  }
+
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  if (diffInWeeks < 4) {
+    return `${diffInWeeks} week${diffInWeeks === 1 ? '' : 's'} ago`;
+  }
+
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return `${diffInMonths} month${diffInMonths === 1 ? '' : 's'} ago`;
+  }
+
+  const diffInYears = Math.floor(diffInDays / 365);
+  return `${diffInYears} year${diffInYears === 1 ? '' : 's'} ago`;
+};
+
 export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<AdminNotification[]>(initialNotifications);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  // Fetch notifications from backend when admin is logged in
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (user && user.role === 'admin' && user.id) {
+        try {
+          const response = await fetch(`${API_URL}/api/notifications/admin/${user.id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            // Format time for each notification
+            const formattedNotifications = data.map((notification: AdminNotification) => ({
+              ...notification,
+              time: notification.time || formatRelativeTime(notification.createdAt)
+            }));
+            setNotifications(formattedNotifications);
+          }
+        } catch (error) {
+          console.error('Error fetching admin notifications:', error);
+        }
+      }
+    };
+
+    fetchNotifications();
+    
+    // Refresh notifications every 30 seconds
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, [user, API_URL]);
 
   const addNotification = (notificationData: Omit<AdminNotification, 'id' | 'createdAt' | 'read'>) => {
     const newNotification: AdminNotification = {
@@ -85,7 +121,8 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
     setNotifications(prev => [newNotification, ...prev]);
   };
 
-  const markAsRead = (id: string) => {
+  const markAsRead = async (id: string) => {
+    // Optimistically update UI
     setNotifications(prev => 
       prev.map(notification => 
         notification.id === id 
@@ -93,12 +130,54 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
           : notification
       )
     );
+
+    // Update backend if admin is logged in
+    if (user && user.role === 'admin') {
+      try {
+        await fetch(`${API_URL}/api/notifications/admin/${id}/read`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+        // Revert on error
+        setNotifications(prev => 
+          prev.map(notification => 
+            notification.id === id 
+              ? { ...notification, read: false }
+              : notification
+          )
+        );
+      }
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    // Optimistically update UI
     setNotifications(prev => 
       prev.map(notification => ({ ...notification, read: true }))
     );
+
+    // Update backend for each unread notification if admin is logged in
+    if (user && user.role === 'admin') {
+      const unreadNotifications = notifications.filter(n => !n.read);
+      try {
+        await Promise.all(
+          unreadNotifications.map(notification =>
+            fetch(`${API_URL}/api/notifications/admin/${notification.id}/read`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+          )
+        );
+      } catch (error) {
+        console.error('Error marking all notifications as read:', error);
+      }
+    }
   };
 
   const deleteNotification = (id: string) => {
@@ -107,6 +186,32 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const getUnreadCount = () => {
     return notifications.filter(notification => !notification.read).length;
+  };
+
+  // Refresh notifications manually
+  const refreshNotifications = async () => {
+    if (user && user.role === 'admin' && user.id) {
+      try {
+        const response = await fetch(`${API_URL}/api/notifications/admin/${user.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Format time for each notification
+          const formattedNotifications = data.map((notification: AdminNotification) => ({
+            ...notification,
+            time: notification.time || formatRelativeTime(notification.createdAt)
+          }));
+          setNotifications(formattedNotifications);
+        }
+      } catch (error) {
+        console.error('Error refreshing admin notifications:', error);
+      }
+    }
   };
 
   const getRecentNotifications = (limit: number = 10) => {
@@ -186,6 +291,7 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
       deleteNotification,
       getUnreadCount,
       getRecentNotifications,
+      refreshNotifications,
       createSignupNotification,
       createApplicationNotification,
       createMilestoneNotification,

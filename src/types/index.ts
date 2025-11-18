@@ -117,6 +117,8 @@ export interface Report {
   dateGenerated: string;
   fileSize: string;
   status: 'ready' | 'processing' | 'error';
+  filePaths?: string[];
+  fileNames?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -141,6 +143,9 @@ export interface Document {
   fileSize: string;
   uploadDate: string;
   type: string;
+  userId?: string;
+  filePath?: string;
+  fileUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -152,6 +157,7 @@ export interface CreateDocumentData {
   fileSize: string;
   uploadDate: string;
   type: string;
+  userId?: string;
 }
 
 export interface UpdateDocumentData extends Partial<CreateDocumentData> {
@@ -207,8 +213,10 @@ export interface Startup {
   founder: string;
   sector: string;
   type: 'innovation' | 'incubation';
-  status: 'pending' | 'active' | 'completed' | 'dropout';
+  status: 'pending' | 'approved' | 'rejected' | 'active' | 'completed' | 'dropout';
   trlLevel: TRLLevel;
   email: string;
   submissionDate: string;
+  userId?: string;
+  startupPhase?: 'idea' | 'seed' | 'series-a' | 'series-b' | 'series-c' | 'growth' | 'exit';
 }

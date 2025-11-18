@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Plus, Edit, Trash2, Search, Filter, User, Mail, Star, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Filter, User, Mail, Star, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import { Mentor, CreateMentorData, UpdateMentorData } from '../../../types';
 import { useMentors } from '../../../hooks/useMentors';
 
@@ -11,6 +11,7 @@ const MentorManage: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingMentor, setEditingMentor] = useState<Mentor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const {
     mentors,
@@ -44,21 +45,45 @@ const MentorManage: React.FC = () => {
     });
   };
 
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSuccessMessage(null);
     
     try {
+      // Auto-generate profile picture initials if not provided
+      const mentorData = {
+        ...formData,
+        profilePicture: formData.profilePicture || getInitials(formData.name)
+      };
+
       if (editingMentor) {
         await updateMentor({
           id: editingMentor.id,
-          ...formData
+          ...mentorData
         });
+        setSuccessMessage('Mentor updated successfully!');
       } else {
-        await createMentor(formData);
+        await createMentor(mentorData);
+        setSuccessMessage('Mentor added successfully!');
+        // Refresh the mentors list to ensure it's up to date
+        await refreshMentors();
       }
       
-      resetForm();
+      // Wait a moment to show success message, then reset
+      setTimeout(() => {
+        resetForm();
+        setSuccessMessage(null);
+      }, 1500);
     } catch (error) {
       console.error('Error saving mentor:', error);
       // Error is handled by the hook and displayed in the UI
@@ -78,6 +103,7 @@ const MentorManage: React.FC = () => {
     });
     setShowAddForm(false);
     setEditingMentor(null);
+    setSuccessMessage(null);
   };
 
   const handleEdit = (mentor: Mentor) => {
@@ -104,17 +130,6 @@ const MentorManage: React.FC = () => {
     }
   };
 
-  const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />);
-    }
-    if (rating % 1 !== 0) {
-      stars.push(<Star key="half" className="h-4 w-4 text-yellow-400 fill-current opacity-50" />);
-    }
-    return stars;
-  };
 
   if (loading) {
     return (
@@ -154,6 +169,15 @@ const MentorManage: React.FC = () => {
         </div>
 
         <Card className="p-6 max-w-4xl">
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-900/20 border border-green-500/50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-400" />
+                <p className="text-green-300">{successMessage}</p>
+              </div>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
@@ -163,6 +187,7 @@ const MentorManage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Enter mentor's full name"
                 required
+                disabled={isSubmitting}
               />
 
               <Input
@@ -172,6 +197,7 @@ const MentorManage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="e.g., Tech Entrepreneur & VC Partner"
                 required
+                disabled={isSubmitting}
               />
 
               <Input
@@ -182,6 +208,7 @@ const MentorManage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="mentor@example.com"
                 required
+                disabled={isSubmitting}
               />
 
               <Input
@@ -191,6 +218,7 @@ const MentorManage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="e.g., 15+ years in tech startups"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -201,10 +229,15 @@ const MentorManage: React.FC = () => {
                 value={formData.bio}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Brief bio and expertise areas..."
                 required
+                disabled={isSubmitting}
               />
+            </div>
+
+            <div className="text-sm text-gray-400">
+              <p>💡 Profile picture initials will be auto-generated from the name if not provided.</p>
             </div>
 
             <div className="flex space-x-4">
@@ -297,8 +330,8 @@ const MentorManage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="h-12 w-12 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {mentor.profilePicture}
+                  <div className="h-12 w-12 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {mentor.profilePicture || getInitials(mentor.name)}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-white">{mentor.name}</h3>
@@ -316,11 +349,6 @@ const MentorManage: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center space-x-1">
-                  {renderStars(mentor.rating)}
-                  <span className="text-gray-400 text-sm ml-1">({mentor.rating})</span>
-                </div>
-                
                 <div className="flex items-center text-sm text-gray-400">
                   <Mail className="h-4 w-4 mr-2" />
                   <span>{mentor.email}</span>
@@ -330,17 +358,6 @@ const MentorManage: React.FC = () => {
               </div>
 
               <p className="text-sm text-gray-400 line-clamp-3">{mentor.bio}</p>
-
-              <div className="pt-4 border-t border-gray-700">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Sessions this month:</span>
-                  <span className="text-white font-medium">8</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Total sessions:</span>
-                  <span className="text-white font-medium">142</span>
-                </div>
-              </div>
             </div>
           </Card>
         ))}

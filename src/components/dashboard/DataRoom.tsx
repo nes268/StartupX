@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import { Search, Filter, Upload, Download, Eye, Trash2, FileText, AlertCircle, Loader2, X } from 'lucide-react';
 import { CreateDocumentData } from '../../types';
 import { useDocuments } from '../../hooks/useDocuments';
+import { useAuth } from '../../context/AuthContext';
+import { documentsApi } from '../../services/documentsApi';
 
 const DataRoom: React.FC = () => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [isUploading, setIsUploading] = useState(false);
@@ -17,10 +20,21 @@ const DataRoom: React.FC = () => {
     documents,
     loading,
     error,
-    createDocument,
+    uploadDocument,
     deleteDocument,
     refreshDocuments
   } = useDocuments();
+
+  // Fetch documents filtered by userId for regular users
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'user' && user.id) {
+        refreshDocuments(user.id);
+      } else if (user.role === 'admin') {
+        refreshDocuments();
+      }
+    }
+  }, [user, refreshDocuments]);
 
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -50,6 +64,19 @@ const DataRoom: React.FC = () => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
+    if (!user) {
+      alert('Please log in to upload files');
+      return;
+    }
+
+    if (!user.id) {
+      console.error('User object:', user);
+      alert('User ID is missing. Please log out and log back in.');
+      return;
+    }
+
+    console.log('Uploading file with userId:', user.id, 'User object:', user);
+
     setIsUploading(true);
 
     try {
@@ -57,14 +84,14 @@ const DataRoom: React.FC = () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         
-        // Validate file size (max 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-          alert(`File ${file.name} is too large. Maximum size is 10MB.`);
+        // Validate file size (max 50MB)
+        if (file.size > 50 * 1024 * 1024) {
+          alert(`File ${file.name} is too large. Maximum size is 50MB.`);
           continue;
         }
 
         // Validate file type
-        const allowedTypes = ['pdf', 'docx', 'xlsx', 'pptx', 'txt', 'jpg', 'jpeg', 'png'];
+        const allowedTypes = ['pdf', 'docx', 'xlsx', 'pptx', 'txt', 'jpg', 'jpeg', 'png', 'doc', 'xls', 'ppt'];
         const fileType = getFileType(file.name);
         
         if (!allowedTypes.includes(fileType)) {
@@ -72,24 +99,23 @@ const DataRoom: React.FC = () => {
           continue;
         }
 
-        // Create document data
-        const documentData: CreateDocumentData = {
-          name: file.name,
-          location: 'Documents/Uploads',
-          owner: 'Current User', // You can get this from auth context
-          fileSize: formatFileSize(file.size),
-          uploadDate: new Date().toISOString().split('T')[0],
-          type: fileType
-        };
+        // Upload the file
+        console.log('Calling uploadDocument with userId:', user.id);
+        await uploadDocument(file, user.id);
+      }
 
-        // Create the document
-        await createDocument(documentData);
+      // Refresh documents list
+      if (user.role === 'user') {
+        await refreshDocuments(user.id);
+      } else {
+        await refreshDocuments();
       }
 
       alert('Files uploaded successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Upload error:', error);
-      alert('Error uploading files. Please try again.');
+      const errorMessage = error?.message || 'Error uploading files. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsUploading(false);
       // Reset the file input
@@ -114,22 +140,25 @@ const DataRoom: React.FC = () => {
     }
   };
 
-  const handleDownloadDocument = (document: any) => {
-    // Create a blob with the document data (in a real app, this would be fetched from server)
-    const content = `Document: ${document.name}\nLocation: ${document.location}\nOwner: ${document.owner}\nFile Size: ${document.fileSize}\nUpload Date: ${document.uploadDate}\nType: ${document.type}`;
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    
-    // Create a temporary link element and trigger download
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${document.name}.txt`; // Download as text file for demo
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Clean up the URL object
-    URL.revokeObjectURL(url);
+  const handleDownloadDocument = async (doc: any) => {
+    try {
+      const blob = await documentsApi.downloadDocument(doc.id);
+      const url = URL.createObjectURL(blob);
+      
+      // Create a temporary link element and trigger download
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = doc.name;
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
+      
+      // Clean up the URL object
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Error downloading file. Please try again.');
+    }
   };
 
   const handleViewDocument = (document: any) => {

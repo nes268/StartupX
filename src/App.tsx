@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { FundingProvider } from './context/FundingContext';
@@ -20,10 +20,14 @@ import Fundraising from './components/dashboard/Fundraising';
 import Settings from './components/dashboard/Settings';
 import AdminReview from './components/dashboard/admin/Review';
 import AdminEvents from './components/dashboard/admin/Events';
-import AdminReports from './components/dashboard/admin/Reports';
 import AdminMentors from './components/dashboard/admin/MentorManage';
 import AdminInvestors from './components/dashboard/admin/InvestorManage';
 import AdminStartups from './components/dashboard/admin/StartupManage';
+import AdminDataRoom from './components/dashboard/admin/AdminDataRoom';
+import { startupsApi } from './services/startupsApi';
+import { notificationsApi, UserNotification } from './services/notificationsApi';
+import { Startup } from './types';
+import { Building2, AlertCircle, X } from 'lucide-react';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -36,6 +40,141 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/login" replace />;
   }
 
+  return <>{children}</>;
+}
+
+// Component to check if user's startup is approved before allowing dashboard access
+function StartupApprovalCheck({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const [startup, setStartup] = useState<Startup | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
+  const [rejectionNotification, setRejectionNotification] = useState<UserNotification | null>(null);
+  const [showRejectionAlert, setShowRejectionAlert] = useState(false);
+
+  useEffect(() => {
+    const checkStartupApproval = async () => {
+      if (!user || user.role === 'admin') {
+        setIsChecking(false);
+        return;
+      }
+
+      try {
+        const userStartup = await startupsApi.getStartupByUserId(user.id);
+        setStartup(userStartup);
+
+        // Check for rejection notifications
+        if (userStartup && userStartup.status === 'rejected') {
+          try {
+            const notifications = await notificationsApi.getUserNotifications(user.id);
+            const rejectionNotif = notifications.find(n => n.type === 'rejection' && !n.read);
+            if (rejectionNotif) {
+              setRejectionNotification(rejectionNotif);
+              setShowRejectionAlert(true);
+            }
+          } catch (error) {
+            console.error('Error fetching notifications:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking startup approval:', error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkStartupApproval();
+  }, [user]);
+
+  if (isChecking) {
+    return <Loading />;
+  }
+
+  // Admin users can always access dashboard
+  if (user?.role === 'admin') {
+    return <>{children}</>;
+  }
+
+  // If user doesn't have a startup yet, redirect to profile wizard
+  if (!startup) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8">
+            <AlertCircle className="h-12 w-12 text-yellow-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-4">Profile Not Complete</h2>
+            <p className="text-gray-300 mb-6">
+              Please complete your profile setup to access the dashboard.
+            </p>
+            <Navigate to="/profile-wizard" replace />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If startup is pending or rejected, show waiting message
+  if (startup.status === 'pending' || startup.status === 'rejected') {
+    const handleDismissRejection = async () => {
+      if (rejectionNotification) {
+        try {
+          await notificationsApi.markAsRead(rejectionNotification.id);
+          setShowRejectionAlert(false);
+        } catch (error) {
+          console.error('Error marking notification as read:', error);
+        }
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
+        <div className="max-w-md w-full space-y-4">
+          {/* Rejection Notification Alert */}
+          {showRejectionAlert && rejectionNotification && (
+            <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-4 mb-4 relative">
+              <button
+                onClick={handleDismissRejection}
+                className="absolute top-2 right-2 text-red-400 hover:text-red-300"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <div className="flex items-start space-x-3">
+                <AlertCircle className="h-5 w-5 text-red-400 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="text-white font-semibold mb-1">Application Rejected</h3>
+                  <p className="text-red-200 text-sm">{rejectionNotification.message}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8 text-center">
+            <Building2 className={`h-12 w-12 mx-auto mb-4 ${startup.status === 'pending' ? 'text-yellow-400' : 'text-red-400'}`} />
+            <h2 className="text-2xl font-bold text-white mb-4">
+              {startup.status === 'pending' ? 'Application Under Review' : 'Application Rejected'}
+            </h2>
+            <p className="text-gray-300 mb-6">
+              {startup.status === 'pending' 
+                ? 'Your profile is currently under review by the admin. You will be notified once a decision has been made.'
+                : 'Your application has been rejected by the admin. Please contact support for more information.'}
+            </p>
+            <button
+              onClick={() => window.location.href = '/login'}
+              className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Return to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If startup is approved, allow access
+  if (startup.status === 'approved') {
+    return <>{children}</>;
+  }
+
+  // For other statuses, allow access (active, completed, etc.)
   return <>{children}</>;
 }
 
@@ -55,10 +194,14 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   if (user) {
     if (user.role === 'admin') {
       return <Navigate to="/admin/dashboard" replace />;
-    } else if (user.profileComplete) {
-      return <Navigate to="/dashboard" replace />;
     } else {
-      return <Navigate to="/profile-wizard" replace />;
+      // For regular users, check if they have completed profile
+      // The StartupApprovalCheck will handle the approval status
+      if (user.profileComplete) {
+        return <Navigate to="/dashboard" replace />;
+      } else {
+        return <Navigate to="/profile-wizard" replace />;
+      }
     }
   }
 
@@ -70,8 +213,8 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-900">
       <ApplicationsProvider>
-        <NotificationsProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <NotificationsProvider>
             <FundingProvider>
               <AlertsProvider>
                 <Router>
@@ -103,7 +246,9 @@ function App() {
             path="/dashboard" 
             element={
               <ProtectedRoute>
-                <DashboardLayout />
+                <StartupApprovalCheck>
+                  <DashboardLayout />
+                </StartupApprovalCheck>
               </ProtectedRoute>
             }
           >
@@ -128,23 +273,22 @@ function App() {
             <Route path="dashboard" element={<AdminOverview />} />
             <Route path="review" element={<AdminReview />} />
             <Route path="events" element={<AdminEvents />} />
-            <Route path="reports" element={<AdminReports />} />
             <Route path="mentors" element={<AdminMentors />} />
             <Route path="investors" element={<AdminInvestors />} />
             <Route path="startups" element={<AdminStartups />} />
-            <Route path="data-room" element={<DataRoom />} />
+            <Route path="data-room" element={<AdminDataRoom />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           
           {/* Redirect root to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
         </Routes>
-                </Router>
-              </AlertsProvider>
-            </FundingProvider>
-          </AuthProvider>
+              </Router>
+            </AlertsProvider>
+          </FundingProvider>
         </NotificationsProvider>
-      </ApplicationsProvider>
+      </AuthProvider>
+    </ApplicationsProvider>
     </div>
   );
 }

@@ -13,7 +13,6 @@ import {
   Building2,
   UserCheck,
   CalendarDays,
-  FileText,
   UserCog,
   DollarSign
 } from 'lucide-react';
@@ -41,7 +40,6 @@ const Sidebar: React.FC = () => {
     { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Overview' },
     { path: '/admin/review', icon: UserCheck, label: 'Review' },
     { path: '/admin/events', icon: CalendarDays, label: 'Events' },
-    { path: '/admin/reports', icon: FileText, label: 'Reports' },
     { path: '/admin/mentors', icon: UserCog, label: 'Mentor Manage' },
     { path: '/admin/investors', icon: DollarSign, label: 'Investor Manage' },
     { path: '/admin/startups', icon: Building2, label: 'Startups' },
@@ -55,8 +53,7 @@ const Sidebar: React.FC = () => {
     <div className="fixed left-0 top-0 w-56 bg-gray-800 border-r border-gray-700 flex flex-col h-screen overflow-hidden z-10">
       {/* Logo */}
       <div className="p-6 border-b border-gray-700 flex-shrink-0">
-        <div className="flex items-center space-x-2">
-          <Building2 className="h-8 w-8 text-cyan-400" />
+        <div className="flex items-center">
           <span className="text-xl font-bold text-white">CITBIF</span>
         </div>
       </div>

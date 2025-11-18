@@ -122,6 +122,7 @@ const Events: React.FC = () => {
 
   const getCategoryColor = (category: string) => {
     const colors = {
+      'Market': 'bg-orange-900/30 text-orange-400',
       'Workshop': 'bg-blue-900/30 text-blue-400',
       'Competition': 'bg-red-900/30 text-red-400',
       'Networking': 'bg-green-900/30 text-green-400',
@@ -130,6 +131,12 @@ const Events: React.FC = () => {
       'Conference': 'bg-indigo-900/30 text-indigo-400',
       'Meetup': 'bg-pink-900/30 text-pink-400',
       'Webinar': 'bg-cyan-900/30 text-cyan-400',
+      'Seminar': 'bg-teal-900/30 text-teal-400',
+      'Hackathon': 'bg-violet-900/30 text-violet-400',
+      'Panel Discussion': 'bg-amber-900/30 text-amber-400',
+      'Product Launch': 'bg-emerald-900/30 text-emerald-400',
+      'Exhibition': 'bg-rose-900/30 text-rose-400',
+      'Trade Show': 'bg-sky-900/30 text-sky-400',
     };
     return colors[category as keyof typeof colors] || 'bg-gray-700 text-gray-300';
   };
@@ -215,9 +222,21 @@ const Events: React.FC = () => {
                   required
                 >
                   <option value="">Select category</option>
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
+                  <option value="Market">Market</option>
+                  <option value="Workshop">Workshop</option>
+                  <option value="Competition">Competition</option>
+                  <option value="Networking">Networking</option>
+                  <option value="Summit">Summit</option>
+                  <option value="Training">Training</option>
+                  <option value="Conference">Conference</option>
+                  <option value="Meetup">Meetup</option>
+                  <option value="Webinar">Webinar</option>
+                  <option value="Seminar">Seminar</option>
+                  <option value="Hackathon">Hackathon</option>
+                  <option value="Panel Discussion">Panel Discussion</option>
+                  <option value="Product Launch">Product Launch</option>
+                  <option value="Exhibition">Exhibition</option>
+                  <option value="Trade Show">Trade Show</option>
                 </select>
               </div>
 

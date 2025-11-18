@@ -164,13 +164,6 @@ const FundingInfo: React.FC<FundingInfoProps> = ({ data, updateData, onNext, onP
           </div>
         )}
 
-        {/* Information Box */}
-        <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-4">
-          <p className="text-sm text-green-400">
-            <strong>Final Step!</strong> After completing this step, you'll be redirected to your personalized dashboard where you can access all platform features.
-          </p>
-        </div>
-
         <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={onPrev}>
             Previous

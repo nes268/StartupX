@@ -4,7 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Card from '../ui/Card';
-import { Building2 } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -50,14 +49,11 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="flex justify-center items-center space-x-2 mb-4">
-            <Building2 className="h-8 w-8 text-cyan-400" />
-            <h1 className="text-3xl font-bold text-white">CITBIF</h1>
-          </div>
+          <h1 className="text-5xl font-bold text-white mb-4">CITBIF</h1>
           <h2 className="text-xl text-gray-300">Welcome back</h2>
           <p className="text-sm text-gray-400 mt-2">Sign in to your account to continue</p>
         </div>

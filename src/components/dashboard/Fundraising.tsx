@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { Target, TrendingUp, DollarSign, Edit, Plus, CheckCircle, Clock, AlertCircle, ArrowRight } from 'lucide-react';
+import { TrendingUp, Edit, CheckCircle, Clock } from 'lucide-react';
 import { useFunding } from '../../context/FundingContext';
 
 const Fundraising: React.FC = () => {
@@ -190,9 +190,6 @@ const Fundraising: React.FC = () => {
               <div>
                 <h3 className="text-lg font-medium text-white mb-1">{currentStageData.name}</h3>
                 <p className="text-gray-400 text-sm">{currentStageData.description}</p>
-                {currentStageData.date && (
-                  <p className="text-xs text-gray-500 mt-1">Completed: {currentStageData.date}</p>
-                )}
               </div>
               <div className="flex space-x-2">
                 <Button 

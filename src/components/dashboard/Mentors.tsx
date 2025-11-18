@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Search, Filter, Star, User, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Filter, User, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
 import { Mentor } from '../../types';
 import { useMentors } from '../../hooks/useMentors';
 
@@ -41,21 +41,6 @@ const Mentors: React.FC = () => {
     setSelectedMentor(null);
   };
 
-  const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />);
-    }
-
-    if (hasHalfStar) {
-      stars.push(<Star key="half" className="h-4 w-4 text-yellow-400 fill-current opacity-50" />);
-    }
-
-    return stars;
-  };
 
   if (showProfile && selectedMentor) {
     return (
@@ -82,10 +67,6 @@ const Mentors: React.FC = () => {
               </div>
               <h2 className="text-2xl font-bold text-white mb-2">{selectedMentor.name}</h2>
               <p className="text-cyan-400 text-lg mb-3">{selectedMentor.role}</p>
-              <div className="flex items-center justify-center space-x-1 mb-3">
-                {renderStars(selectedMentor.rating)}
-                <span className="text-gray-400 ml-2">({selectedMentor.rating}/5)</span>
-              </div>
               <p className="text-gray-400">{selectedMentor.experience}</p>
             </div>
 
@@ -147,15 +128,6 @@ const Mentors: React.FC = () => {
                   <div>
                     <p className="text-gray-400 text-sm">Email</p>
                     <p className="text-white">{selectedMentor.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center">
-                    <Star className="h-4 w-4 text-gray-300" />
-                  </div>
-                  <div>
-                    <p className="text-gray-400 text-sm">Rating</p>
-                    <p className="text-white">{selectedMentor.rating}/5.0</p>
                   </div>
                 </div>
               </div>
@@ -347,10 +319,6 @@ const Mentors: React.FC = () => {
               </div>
               <h3 className="text-xl font-semibold text-white mb-1">{mentor.name}</h3>
               <p className="text-cyan-400 text-sm mb-2">{mentor.role}</p>
-              <div className="flex items-center justify-center space-x-1 mb-2">
-                {renderStars(mentor.rating)}
-                <span className="text-gray-400 text-sm ml-1">({mentor.rating})</span>
-              </div>
               <p className="text-gray-400 text-sm">{mentor.experience}</p>
             </div>
 
@@ -366,14 +334,6 @@ const Mentors: React.FC = () => {
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Request Session
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={() => handleViewProfile(mentor)}
-              >
-                <User className="h-4 w-4 mr-2" />
-                View Profile
               </Button>
             </div>
           </Card>

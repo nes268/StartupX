@@ -1,43 +1,82 @@
 import { Investor, CreateInvestorData, UpdateInvestorData } from '../types';
-import { mockInvestorsApi } from './mockInvestorsApi';
 
-// For now, use mock API. Replace with real API when backend is ready
-const USE_MOCK_API = true;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 class InvestorsApi {
-  async getInvestors(): Promise<Investor[]> {
-    if (USE_MOCK_API) {
-      return mockInvestorsApi.getInvestors();
+  private async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (e) {
+        // If response is not JSON, try to get text
+        try {
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        } catch (textError) {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+      }
+      throw new Error(errorMessage);
     }
-    throw new Error('Real API not implemented yet');
+    return response.json();
+  }
+
+  async getInvestors(): Promise<Investor[]> {
+    const response = await fetch(`${API_URL}/api/investors`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return this.handleResponse<Investor[]>(response);
   }
 
   async getInvestorById(id: string): Promise<Investor> {
-    if (USE_MOCK_API) {
-      return mockInvestorsApi.getInvestorById(id);
-    }
-    throw new Error('Real API not implemented yet');
+    const response = await fetch(`${API_URL}/api/investors/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return this.handleResponse<Investor>(response);
   }
 
   async createInvestor(investorData: CreateInvestorData): Promise<Investor> {
-    if (USE_MOCK_API) {
-      return mockInvestorsApi.createInvestor(investorData);
-    }
-    throw new Error('Real API not implemented yet');
+    const response = await fetch(`${API_URL}/api/investors`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(investorData),
+    });
+    return this.handleResponse<Investor>(response);
   }
 
   async updateInvestor(investorData: UpdateInvestorData): Promise<Investor> {
-    if (USE_MOCK_API) {
-      return mockInvestorsApi.updateInvestor(investorData);
-    }
-    throw new Error('Real API not implemented yet');
+    const { id, ...updateData } = investorData;
+    const response = await fetch(`${API_URL}/api/investors/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updateData),
+    });
+    return this.handleResponse<Investor>(response);
   }
 
   async deleteInvestor(id: string): Promise<void> {
-    if (USE_MOCK_API) {
-      return mockInvestorsApi.deleteInvestor(id);
+    const response = await fetch(`${API_URL}/api/investors/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
-    throw new Error('Real API not implemented yet');
   }
 }
 

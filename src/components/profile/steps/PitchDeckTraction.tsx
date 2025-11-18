@@ -202,12 +202,6 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
           </div>
         </div>
 
-        <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-4">
-          <p className="text-sm text-blue-400">
-            <strong>Tip:</strong> Upload comprehensive documents that showcase your business model, market traction, and financial health. This helps accelerate the review process.
-          </p>
-        </div>
-
         <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={onPrev}>
             Previous

@@ -1,43 +1,70 @@
 import { Mentor, CreateMentorData, UpdateMentorData } from '../types';
-import { mockMentorsApi } from './mockMentorsApi';
 
-// For now, use mock API. Replace with real API when backend is ready
-const USE_MOCK_API = true;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 class MentorsApi {
-  async getMentors(): Promise<Mentor[]> {
-    if (USE_MOCK_API) {
-      return mockMentorsApi.getMentors();
+  private async handleResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
-    throw new Error('Real API not implemented yet');
+    return response.json();
+  }
+
+  async getMentors(): Promise<Mentor[]> {
+    const response = await fetch(`${API_URL}/api/mentors`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return this.handleResponse<Mentor[]>(response);
   }
 
   async getMentorById(id: string): Promise<Mentor> {
-    if (USE_MOCK_API) {
-      return mockMentorsApi.getMentorById(id);
-    }
-    throw new Error('Real API not implemented yet');
+    const response = await fetch(`${API_URL}/api/mentors/${id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return this.handleResponse<Mentor>(response);
   }
 
   async createMentor(mentorData: CreateMentorData): Promise<Mentor> {
-    if (USE_MOCK_API) {
-      return mockMentorsApi.createMentor(mentorData);
-    }
-    throw new Error('Real API not implemented yet');
+    const response = await fetch(`${API_URL}/api/mentors`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mentorData),
+    });
+    return this.handleResponse<Mentor>(response);
   }
 
   async updateMentor(mentorData: UpdateMentorData): Promise<Mentor> {
-    if (USE_MOCK_API) {
-      return mockMentorsApi.updateMentor(mentorData);
-    }
-    throw new Error('Real API not implemented yet');
+    const { id, ...updateData } = mentorData;
+    const response = await fetch(`${API_URL}/api/mentors/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updateData),
+    });
+    return this.handleResponse<Mentor>(response);
   }
 
   async deleteMentor(id: string): Promise<void> {
-    if (USE_MOCK_API) {
-      return mockMentorsApi.deleteMentor(id);
+    const response = await fetch(`${API_URL}/api/mentors/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error occurred' }));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
-    throw new Error('Real API not implemented yet');
   }
 }
 

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Search, Filter, Eye, Check, X, Calendar, Building2, User, Mail, AlertCircle, CheckCircle, Loader2, Phone } from 'lucide-react';
+import { Search, Filter, Eye, Check, X, Calendar, Building2, User, AlertCircle, CheckCircle, Loader2, RefreshCw } from 'lucide-react';
 import { Startup } from '../../../types';
 import { useAlerts } from '../../../context/AlertsContext';
 import { useNotifications } from '../../../context/NotificationsContext';
@@ -13,6 +13,8 @@ const Review: React.FC = () => {
   const { createApplicationNotification, createReviewNotification } = useNotifications();
   const { 
     applications, 
+    isLoading,
+    refreshApplications,
     updateApplication, 
     approveApplication, 
     rejectApplication 
@@ -20,17 +22,34 @@ const Review: React.FC = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('pending');
+
+  // Auto-refresh applications every 60 seconds (silent refresh - no loading indicator)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Silent refresh - don't show loading state
+      refreshApplications(false);
+    }, 60000); // Refresh every 60 seconds
+
+    return () => clearInterval(interval);
+  }, [refreshApplications]);
+
+  // Refresh when page becomes visible (user switches tabs back) - silent refresh
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Silent refresh - don't show loading state
+        refreshApplications(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [refreshApplications]);
   const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
   const [processingStartupId, setProcessingStartupId] = useState<string | null>(null);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
   const [showErrorMessage, setShowErrorMessage] = useState(false);
   const [message, setMessage] = useState('');
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [showCallModal, setShowCallModal] = useState(false);
-  const [emailSubject, setEmailSubject] = useState('');
-  const [emailMessage, setEmailMessage] = useState('');
-  const [callDate, setCallDate] = useState('');
-  const [callTime, setCallTime] = useState('');
 
   // Use dynamic applications from context
   const startups = applications;
@@ -46,14 +65,11 @@ const Review: React.FC = () => {
   const handleApprove = async (startupId: string) => {
     setProcessingStartupId(startupId);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Find the startup to get its details
+      // Find the startup to get its details before approval
       const startup = startups.find(s => s.id === startupId);
       
-      // Update application status using context
-      approveApplication(startupId);
+      // Update application status using context (this calls the backend API)
+      await approveApplication(startupId);
       
       // Create automatic alert for the approved startup
       if (startup) {
@@ -75,8 +91,8 @@ const Review: React.FC = () => {
       if (selectedStartup?.id === startupId) {
         setSelectedStartup(null);
       }
-    } catch (error) {
-      setMessage('Failed to approve application. Please try again.');
+    } catch (error: any) {
+      setMessage(error.message || 'Failed to approve application. Please try again.');
       setShowErrorMessage(true);
       setTimeout(() => setShowErrorMessage(false), 3000);
     } finally {
@@ -91,11 +107,8 @@ const Review: React.FC = () => {
     
     setProcessingStartupId(startupId);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Update application status using context
-      rejectApplication(startupId);
+      // Update application status using context (this calls the backend API)
+      await rejectApplication(startupId);
       
       setMessage('Startup application rejected.');
       setShowSuccessMessage(true);
@@ -105,8 +118,8 @@ const Review: React.FC = () => {
       if (selectedStartup?.id === startupId) {
         setSelectedStartup(null);
       }
-    } catch (error) {
-      setMessage('Failed to reject application. Please try again.');
+    } catch (error: any) {
+      setMessage(error.message || 'Failed to reject application. Please try again.');
       setShowErrorMessage(true);
       setTimeout(() => setShowErrorMessage(false), 3000);
     } finally {
@@ -114,81 +127,7 @@ const Review: React.FC = () => {
     }
   };
 
-  const handleRequestMoreInfo = async (startupId: string) => {
-    setProcessingStartupId(startupId);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setMessage('Information request sent to startup.');
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
-    } catch (error) {
-      setMessage('Failed to send information request. Please try again.');
-      setShowErrorMessage(true);
-      setTimeout(() => setShowErrorMessage(false), 3000);
-    } finally {
-      setProcessingStartupId(null);
-    }
-  };
 
-  const handleSendEmail = async () => {
-    if (!emailSubject.trim() || !emailMessage.trim()) {
-      setMessage('Please fill in both subject and message.');
-      setShowErrorMessage(true);
-      setTimeout(() => setShowErrorMessage(false), 3000);
-      return;
-    }
-
-    setProcessingStartupId(selectedStartup?.id || 'email');
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setMessage(`Email sent to ${selectedStartup?.email}`);
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
-      
-      setShowEmailModal(false);
-      setEmailSubject('');
-      setEmailMessage('');
-    } catch (error) {
-      setMessage('Failed to send email. Please try again.');
-      setShowErrorMessage(true);
-      setTimeout(() => setShowErrorMessage(false), 3000);
-    } finally {
-      setProcessingStartupId(null);
-    }
-  };
-
-  const handleScheduleCall = async () => {
-    if (!callDate || !callTime) {
-      setMessage('Please select both date and time.');
-      setShowErrorMessage(true);
-      setTimeout(() => setShowErrorMessage(false), 3000);
-      return;
-    }
-
-    setProcessingStartupId(selectedStartup?.id || 'call');
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setMessage(`Call scheduled with ${selectedStartup?.name} for ${callDate} at ${callTime}`);
-      setShowSuccessMessage(true);
-      setTimeout(() => setShowSuccessMessage(false), 3000);
-      
-      setShowCallModal(false);
-      setCallDate('');
-      setCallTime('');
-    } catch (error) {
-      setMessage('Failed to schedule call. Please try again.');
-      setShowErrorMessage(true);
-      setTimeout(() => setShowErrorMessage(false), 3000);
-    } finally {
-      setProcessingStartupId(null);
-    }
-  };
 
   const handleViewDocument = (docName: string) => {
     // Simulate document viewing
@@ -294,45 +233,6 @@ const Review: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Documents</h3>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Business Plan.pdf', size: '2.5 MB', status: 'verified' },
-                    { name: 'Aadhaar Card.pdf', size: '1.2 MB', status: 'verified' },
-                    { name: 'Incorporation Certificate.pdf', size: '890 KB', status: 'pending' },
-                    { name: 'Financial Projections.xlsx', size: '1.8 MB', status: 'verified' },
-                  ].map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-500/10 rounded">
-                          <Building2 className="h-4 w-4 text-blue-400" />
-                        </div>
-                        <div>
-                          <p className="text-white font-medium">{doc.name}</p>
-                          <p className="text-sm text-gray-400">{doc.size}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          doc.status === 'verified' 
-                            ? 'bg-green-900/30 text-green-400' 
-                            : 'bg-yellow-900/30 text-yellow-400'
-                        }`}>
-                          {doc.status}
-                        </span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleViewDocument(doc.name)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* Actions Sidebar */}
@@ -379,62 +279,9 @@ const Review: React.FC = () => {
                       {selectedStartup.status === 'rejected' ? 'Rejected' : 'Reject Application'}
                     </span>
                   </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handleRequestMoreInfo(selectedStartup.id)}
-                    disabled={processingStartupId === selectedStartup.id}
-                  >
-                    {processingStartupId === selectedStartup.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Request More Info'
-                    )}
-                  </Button>
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Contact</h3>
-                <div className="space-y-3">
-                  <Button 
-                    variant="outline" 
-                    className="w-full flex items-center space-x-2"
-                    onClick={() => setShowEmailModal(true)}
-                    disabled={processingStartupId === selectedStartup.id}
-                  >
-                    <Mail className="h-4 w-4" />
-                    <span>Send Email</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setShowCallModal(true)}
-                    disabled={processingStartupId === selectedStartup.id}
-                  >
-                    <Phone className="h-4 w-4 mr-2" />
-                    Schedule Call
-                  </Button>
-                </div>
-              </div>
-
-              <div className="bg-gray-700/30 rounded-lg p-4">
-                <h4 className="text-white font-medium mb-2">Submission Timeline</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Submitted:</span>
-                    <span className="text-white">{selectedStartup.submissionDate}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Days pending:</span>
-                    <span className="text-yellow-400">2 days</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </Card>
@@ -445,11 +292,25 @@ const Review: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-white">Application Review</h1>
+          <p className="text-gray-400 mt-1">Review and approve startup applications</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => refreshApplications(true)}
+          disabled={isLoading && applications.length === 0}
+          className="flex items-center space-x-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading && applications.length === 0 ? 'animate-spin' : ''}`} />
+          <span>Refresh</span>
+        </Button>
+      </div>
+      
+      {/* Status Counters */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Application Review</h1>
-        <p className="text-gray-400 mt-1">Review and approve startup applications</p>
-        
-        {/* Status Counters */}
         <div className="flex space-x-6 mt-4">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500" />
@@ -502,6 +363,16 @@ const Review: React.FC = () => {
           </div>
         </div>
       </Card>
+
+      {/* Background refresh indicator */}
+      {isLoading && applications.length > 0 && (
+        <div className="fixed top-20 right-4 z-50">
+          <div className="flex items-center space-x-2 bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 shadow-lg">
+            <RefreshCw className="h-4 w-4 text-cyan-400 animate-spin" />
+            <span className="text-sm text-gray-300">Refreshing...</span>
+          </div>
+        </div>
+      )}
 
       {/* Applications Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -600,7 +471,14 @@ const Review: React.FC = () => {
         ))}
       </div>
 
-      {filteredStartups.length === 0 && (
+      {isLoading && applications.length === 0 && (
+        <Card className="p-12 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading applications...</p>
+        </Card>
+      )}
+
+      {!isLoading && filteredStartups.length === 0 && applications.length === 0 && (
         <Card className="p-12 text-center">
           <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-300 mb-2">No applications found</h3>
@@ -631,150 +509,6 @@ const Review: React.FC = () => {
             <div className="flex items-center space-x-3">
               <AlertCircle className="h-5 w-5 text-red-400" />
               <span className="text-red-300">{message}</span>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Email Modal */}
-      {showEmailModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl mx-4">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Send Email</h2>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowEmailModal(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">To</label>
-                  <Input
-                    value={selectedStartup?.email || ''}
-                    disabled
-                    className="bg-gray-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Subject</label>
-                  <Input
-                    value={emailSubject}
-                    onChange={(e) => setEmailSubject(e.target.value)}
-                    placeholder="Enter email subject"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Message</label>
-                  <textarea
-                    value={emailMessage}
-                    onChange={(e) => setEmailMessage(e.target.value)}
-                    rows={6}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                    placeholder="Enter your message..."
-                  />
-                </div>
-                <div className="flex space-x-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowEmailModal(false)}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSendEmail}
-                    disabled={processingStartupId === selectedStartup?.id}
-                    className="flex-1"
-                  >
-                    {processingStartupId === selectedStartup?.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      'Send Email'
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Call Modal */}
-      {showCallModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl mx-4">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Schedule Call</h2>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowCallModal(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">With</label>
-                  <Input
-                    value={selectedStartup?.name || ''}
-                    disabled
-                    className="bg-gray-800"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
-                    <Input
-                      type="date"
-                      value={callDate}
-                      onChange={(e) => setCallDate(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Time</label>
-                    <Input
-                      type="time"
-                      value={callTime}
-                      onChange={(e) => setCallTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className="flex space-x-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowCallModal(false)}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleScheduleCall}
-                    disabled={processingStartupId === selectedStartup?.id}
-                    className="flex-1"
-                  >
-                    {processingStartupId === selectedStartup?.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Scheduling...
-                      </>
-                    ) : (
-                      'Schedule Call'
-                    )}
-                  </Button>
-                </div>
-              </div>
             </div>
           </Card>
         </div>

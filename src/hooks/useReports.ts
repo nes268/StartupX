@@ -6,7 +6,7 @@ export interface UseReportsReturn {
   reports: Report[];
   loading: boolean;
   error: string | null;
-  createReport: (reportData: CreateReportData) => Promise<Report>;
+  createReport: (reportData: CreateReportData, files: File[], adminId?: string) => Promise<Report>;
   updateReport: (reportData: UpdateReportData) => Promise<Report>;
   deleteReport: (id: string) => Promise<void>;
   refreshReports: () => Promise<void>;
@@ -31,13 +31,13 @@ export const useReports = (): UseReportsReturn => {
     }
   }, []);
 
-  const createReport = useCallback(async (reportData: CreateReportData): Promise<Report> => {
+  const createReport = useCallback(async (reportData: CreateReportData, files: File[], adminId?: string): Promise<Report> => {
     try {
       setError(null);
-      const newReport = await reportsApi.createReport(reportData);
+      const newReport = await reportsApi.createReport(reportData, files, adminId);
       
-      // Update local state
-      setReports(prev => [...prev, newReport]);
+      // Refresh reports to get updated list
+      await fetchReports();
       
       return newReport;
     } catch (err) {
@@ -45,7 +45,7 @@ export const useReports = (): UseReportsReturn => {
       setError(errorMessage);
       throw new Error(errorMessage);
     }
-  }, []);
+  }, [fetchReports]);
 
   const updateReport = useCallback(async (reportData: UpdateReportData): Promise<Report> => {
     try {

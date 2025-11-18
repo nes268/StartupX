@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Plus, Edit, Trash2, Search, Filter, DollarSign, Mail, Phone, Building, AlertCircle, Loader2 } from 'lucide-react';
-import { Investor, CreateInvestorData, UpdateInvestorData } from '../../../types';
+import { Plus, Edit, Trash2, Search, Filter, DollarSign, Mail, Phone, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import { Investor, CreateInvestorData } from '../../../types';
 import { useInvestors } from '../../../hooks/useInvestors';
 
 const InvestorManage: React.FC = () => {
@@ -11,6 +11,7 @@ const InvestorManage: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingInvestor, setEditingInvestor] = useState<Investor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const {
     investors,
@@ -46,6 +47,15 @@ const InvestorManage: React.FC = () => {
     investor.focusAreas.some(area => area.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
@@ -65,21 +75,41 @@ const InvestorManage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSuccessMessage(null);
+    // Clear any previous errors from the hook
+    if (error) {
+      refreshInvestors().catch(() => {}); // This will reset error state
+    }
     
     try {
+      // Auto-generate profile picture initials if not provided
+      const investorData = {
+        ...formData,
+        profilePicture: formData.profilePicture || getInitials(formData.name)
+      };
+
       if (editingInvestor) {
         await updateInvestor({
           id: editingInvestor.id,
-          ...formData
+          ...investorData
         });
+        setSuccessMessage('Investor updated successfully!');
       } else {
-        await createInvestor(formData);
+        await createInvestor(investorData);
+        setSuccessMessage('Investor added successfully!');
+        // Refresh the investors list to ensure it's up to date
+        await refreshInvestors();
       }
       
-      resetForm();
-    } catch (error) {
+      // Wait a moment to show success message, then reset
+      setTimeout(() => {
+        resetForm();
+        setSuccessMessage(null);
+      }, 1500);
+    } catch (error: any) {
       console.error('Error saving investor:', error);
       // Error is handled by the hook and displayed in the UI
+      // The error state from useInvestors hook will show the error
     } finally {
       setIsSubmitting(false);
     }
@@ -98,6 +128,7 @@ const InvestorManage: React.FC = () => {
     });
     setShowAddForm(false);
     setEditingInvestor(null);
+    setSuccessMessage(null);
   };
 
   const handleEdit = (investor: Investor) => {
@@ -164,6 +195,27 @@ const InvestorManage: React.FC = () => {
         </div>
 
         <Card className="p-6 max-w-4xl">
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-900/20 border border-green-500/50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-400" />
+                <p className="text-green-300">{successMessage}</p>
+              </div>
+            </div>
+          )}
+          
+          {error && (
+            <div className="mb-4 p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <AlertCircle className="h-5 w-5 text-red-400" />
+                <div>
+                  <h3 className="text-red-400 font-medium">Error</h3>
+                  <p className="text-red-300 text-sm mt-1">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
@@ -173,6 +225,7 @@ const InvestorManage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Enter investor's full name"
                 required
+                disabled={isSubmitting}
               />
 
               <Input
@@ -182,6 +235,7 @@ const InvestorManage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="Investment firm or company name"
                 required
+                disabled={isSubmitting}
               />
 
               <Input
@@ -192,6 +246,7 @@ const InvestorManage: React.FC = () => {
                 onChange={handleInputChange}
                 placeholder="investor@example.com"
                 required
+                disabled={isSubmitting}
               />
 
               <Input
@@ -200,6 +255,7 @@ const InvestorManage: React.FC = () => {
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
                 placeholder="+1 (555) 123-4567"
+                disabled={isSubmitting}
               />
 
               <div className="md:col-span-2">
@@ -210,6 +266,7 @@ const InvestorManage: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="e.g., $100K - $2M"
                   required
+                  disabled={isSubmitting}
                 />
               </div>
             </div>
@@ -223,7 +280,8 @@ const InvestorManage: React.FC = () => {
                       type="checkbox"
                       checked={formData.focusAreas.includes(area)}
                       onChange={() => handleFocusAreaToggle(area)}
-                      className="rounded border-gray-600 text-cyan-600 focus:ring-cyan-500"
+                      className="rounded border-gray-600 text-cyan-600 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isSubmitting}
                     />
                     <span className="text-gray-300 text-sm">{area}</span>
                   </label>
@@ -238,10 +296,15 @@ const InvestorManage: React.FC = () => {
                 value={formData.backgroundSummary}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Brief background and investment philosophy..."
                 required
+                disabled={isSubmitting}
               />
+            </div>
+
+            <div className="text-sm text-gray-400">
+              <p>💡 Profile picture initials will be auto-generated from the name if not provided.</p>
             </div>
 
             <div className="flex space-x-4">
@@ -329,14 +392,14 @@ const InvestorManage: React.FC = () => {
       </Card>
 
       {/* Investors Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredInvestors.map((investor) => (
           <Card key={investor.id} className="p-6" hover>
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="h-12 w-12 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold">
-                    {investor.profilePicture}
+                  <div className="h-12 w-12 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {investor.profilePicture || getInitials(investor.name)}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-white">{investor.name}</h3>
@@ -359,29 +422,37 @@ const InvestorManage: React.FC = () => {
                   <span>{investor.email}</span>
                 </div>
                 
-                <div className="flex items-center text-sm text-gray-400">
-                  <Phone className="h-4 w-4 mr-2" />
-                  <span>{investor.phoneNumber}</span>
-                </div>
+                {investor.phoneNumber && (
+                  <div className="flex items-center text-sm text-gray-400">
+                    <Phone className="h-4 w-4 mr-2" />
+                    <span>{investor.phoneNumber}</span>
+                  </div>
+                )}
                 
-                <div className="flex items-center text-sm text-gray-400">
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  <span>{investor.investmentRange}</span>
-                </div>
+                {investor.investmentRange && (
+                  <div className="flex items-center text-sm text-gray-300">
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    <span>{investor.investmentRange}</span>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <p className="text-sm text-gray-400 mb-2">Focus Areas:</p>
-                <div className="flex flex-wrap gap-2">
-                  {investor.focusAreas.map(area => (
-                    <span key={area} className="text-xs px-2 py-1 bg-cyan-900/30 text-cyan-400 rounded-full">
-                      {area}
-                    </span>
-                  ))}
+              {investor.focusAreas && investor.focusAreas.length > 0 && (
+                <div>
+                  <p className="text-sm text-gray-400 mb-2">Focus Areas:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {investor.focusAreas.map(area => (
+                      <span key={area} className="text-xs px-2 py-1 bg-cyan-900/30 text-cyan-400 rounded-full">
+                        {area}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <p className="text-sm text-gray-400 line-clamp-2">{investor.backgroundSummary}</p>
+              {investor.backgroundSummary && (
+                <p className="text-sm text-gray-400 line-clamp-3">{investor.backgroundSummary}</p>
+              )}
             </div>
           </Card>
         ))}
