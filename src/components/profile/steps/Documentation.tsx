@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Button from '../../ui/Button';
 import { Profile } from '../../../types';
-import { FileText, Upload, Check } from 'lucide-react';
+import { FileText, Upload, Check, Loader2 } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
+import { documentsApi } from '../../../services/documentsApi';
 
 interface DocumentationProps {
   data: Partial<Profile>;
@@ -11,6 +13,7 @@ interface DocumentationProps {
 }
 
 const Documentation: React.FC<DocumentationProps> = ({ data, updateData, onNext, onPrev }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     aadhaarDoc: data.aadhaarDoc || '',
     incorporationCert: data.incorporationCert || '',
@@ -18,7 +21,12 @@ const Documentation: React.FC<DocumentationProps> = ({ data, updateData, onNext,
     dpiitCert: data.dpiitCert || '',
     mouPartnership: data.mouPartnership || '',
   });
+  const [documentNames, setDocumentNames] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploading, setUploading] = useState<Record<string, boolean>>({});
+  
+  // Refs for file inputs
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,13 +41,76 @@ const Documentation: React.FC<DocumentationProps> = ({ data, updateData, onNext,
     onNext();
   };
 
-  const handleFileUpload = (field: keyof typeof formData) => {
-    // Simulate file upload
-    const fileName = `${field}_${Date.now()}.pdf`;
-    setFormData({
-      ...formData,
-      [field]: fileName,
+  const handleFileSelect = async (field: keyof typeof formData, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!user?.id) {
+      setErrors({ [field]: 'User not found. Please login again.' });
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['pdf', 'docx', 'xlsx', 'pptx', 'txt', 'jpg', 'jpeg', 'png', 'doc', 'xls', 'ppt'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    
+    if (!fileExtension || !allowedTypes.includes(fileExtension)) {
+      setErrors({ [field]: `File type .${fileExtension} is not supported. Allowed types: ${allowedTypes.join(', ')}` });
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setErrors({ [field]: 'File size exceeds 10MB limit' });
+      return;
+    }
+
+    setUploading(prev => ({ ...prev, [field]: true }));
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
     });
+
+    try {
+      const uploadedDocument = await documentsApi.uploadDocument(file, user.id);
+      
+      const fileUrl = uploadedDocument.fileUrl || uploadedDocument.id || file.name;
+      const documentName = uploadedDocument.name || file.name;
+      
+      // Store the file URL or document ID in formData
+      setFormData(prev => {
+        const updated = {
+          ...prev,
+          [field]: fileUrl,
+        };
+        
+        // Update profile data immediately
+        updateData(updated);
+        
+        return updated;
+      });
+      
+      // Store document name for display
+      setDocumentNames(prev => ({
+        ...prev,
+        [field]: documentName,
+      }));
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setErrors({ [field]: error.message || 'Failed to upload file. Please try again.' });
+    } finally {
+      setUploading(prev => ({ ...prev, [field]: false }));
+      // Reset file input
+      if (fileInputRefs.current[field]) {
+        fileInputRefs.current[field]!.value = '';
+      }
+    }
+  };
+
+  const handleUploadClick = (field: keyof typeof formData) => {
+    fileInputRefs.current[field]?.click();
   };
 
   const documents = [
@@ -106,20 +177,43 @@ const Documentation: React.FC<DocumentationProps> = ({ data, updateData, onNext,
               
               <p className="text-sm text-gray-400 mb-3">{doc.description}</p>
               
+              <input
+                type="file"
+                ref={(el) => (fileInputRefs.current[doc.key] = el)}
+                onChange={(e) => handleFileSelect(doc.key, e)}
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png"
+                className="hidden"
+                id={`file-input-${doc.key}`}
+              />
+              
               <div className="flex items-center space-x-3">
                 <Button
                   type="button"
                   variant={formData[doc.key] ? "secondary" : "outline"}
                   size="sm"
-                  onClick={() => handleFileUpload(doc.key)}
+                  onClick={() => handleUploadClick(doc.key)}
+                  disabled={uploading[doc.key]}
                   className="flex items-center space-x-2"
                 >
-                  <Upload className="h-4 w-4" />
-                  <span>{formData[doc.key] ? 'Replace File' : 'Upload File'}</span>
+                  {uploading[doc.key] ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4" />
+                      <span>{formData[doc.key] ? 'Replace File' : 'Upload File'}</span>
+                    </>
+                  )}
                 </Button>
                 
-                {formData[doc.key] && (
-                  <span className="text-sm text-gray-300">{formData[doc.key]}</span>
+                {formData[doc.key] && !uploading[doc.key] && (
+                  <span className="text-sm text-gray-300">
+                    {documentNames[doc.key] || (formData[doc.key].includes('/') 
+                      ? formData[doc.key].split('/').pop() 
+                      : formData[doc.key])}
+                  </span>
                 )}
               </div>
               
@@ -128,12 +222,6 @@ const Documentation: React.FC<DocumentationProps> = ({ data, updateData, onNext,
               )}
             </div>
           ))}
-        </div>
-
-        <div className="bg-yellow-900/20 border border-yellow-600/30 rounded-lg p-4">
-          <p className="text-sm text-yellow-400">
-            <strong>Note:</strong> Aadhaar document upload is mandatory. All other documents are optional but recommended for faster processing.
-          </p>
         </div>
 
         <div className="flex justify-between">
