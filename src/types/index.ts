@@ -205,8 +205,6 @@ export interface Document {
   type: string;
 }
 
-export type TRLLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-
 export interface Startup {
   id: string;
   name: string;
@@ -214,7 +212,6 @@ export interface Startup {
   sector: string;
   type: 'innovation' | 'incubation';
   status: 'pending' | 'approved' | 'rejected' | 'active' | 'completed' | 'dropout';
-  trlLevel: TRLLevel;
   email: string;
   submissionDate: string;
   userId?: string;

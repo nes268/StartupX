@@ -21,8 +21,7 @@ const Fundraising: React.FC = () => {
   const [editingStage, setEditingStage] = useState<string | null>(null);
   const [editData, setEditData] = useState({
     targetAmount: '',
-    raisedAmount: '',
-    progress: ''
+    raisedAmount: ''
   });
 
   const getStatusIcon = (status: string) => {
@@ -53,8 +52,7 @@ const Fundraising: React.FC = () => {
     if (stage) {
       setEditData({
         targetAmount: stage.targetAmount?.toString() || '',
-        raisedAmount: stage.raisedAmount?.toString() || '',
-        progress: stage.progress.toString()
+        raisedAmount: stage.raisedAmount?.toString() || ''
       });
     }
   };
@@ -65,8 +63,7 @@ const Fundraising: React.FC = () => {
     if (stage) {
       setEditData({
         targetAmount: stage.targetAmount?.toString() || '',
-        raisedAmount: stage.raisedAmount?.toString() || '',
-        progress: stage.progress.toString()
+        raisedAmount: stage.raisedAmount?.toString() || ''
       });
     }
     setShowEditForm(true);
@@ -82,12 +79,16 @@ const Fundraising: React.FC = () => {
 
   const handleSave = () => {
     if (editingStage) {
-      const targetAmount = parseInt(editData.targetAmount) || 0;
-      const raisedAmount = parseInt(editData.raisedAmount) || 0;
-      const progress = parseInt(editData.progress) || 0;
+      const targetAmount = parseFloat(editData.targetAmount) || 0;
+      const raisedAmount = parseFloat(editData.raisedAmount) || 0;
+      
+      // Calculate progress automatically from target and raised amounts
+      const progress = targetAmount > 0 
+        ? Math.min(100, Math.max(0, (raisedAmount / targetAmount) * 100))
+        : 0;
 
-      updateFundingAmounts(targetAmount, raisedAmount);
-      updateStageProgress(editingStage, progress, raisedAmount);
+      // Update the stage with target amount, raised amount, and calculated progress
+      updateStageProgress(editingStage, progress, raisedAmount, targetAmount);
       
       if (progress >= 100) {
         completeStage(editingStage);
@@ -242,6 +243,8 @@ const Fundraising: React.FC = () => {
                   name="targetAmount"
                   value={editData.targetAmount}
                   onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   placeholder="Enter target amount"
                 />
@@ -254,22 +257,10 @@ const Fundraising: React.FC = () => {
                   name="raisedAmount"
                   value={editData.raisedAmount}
                   onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
                   className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
                   placeholder="Enter amount raised"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Progress (%)</label>
-                <input 
-                  type="number"
-                  name="progress"
-                  value={editData.progress}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="100"
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                  placeholder="Enter progress percentage"
                 />
               </div>
 

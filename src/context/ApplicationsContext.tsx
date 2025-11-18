@@ -9,7 +9,6 @@ export interface Application extends Startup {
   sector: string;
   type: 'incubation' | 'innovation';
   status: 'pending' | 'approved' | 'rejected' | 'active' | 'completed' | 'dropout';
-  trlLevel: number;
   email: string;
   submissionDate: string;
   createdAt: string;

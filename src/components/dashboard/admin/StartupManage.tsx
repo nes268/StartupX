@@ -3,7 +3,7 @@ import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
 import { Search, Filter, Building2, User, Mail, AlertCircle, Loader2, X, Phone, MapPin, Briefcase, FileText, DollarSign, Calendar, Users, Link as LinkIcon } from 'lucide-react';
-import { Startup, TRLLevel, Profile } from '../../../types';
+import { Startup, Profile } from '../../../types';
 import { useStartups } from '../../../hooks/useStartups';
 import { profileApi } from '../../../services/profileApi';
 
@@ -12,7 +12,6 @@ const StartupManage: React.FC = () => {
   const [filterSector, setFilterSector] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterTRL, setFilterTRL] = useState('all');
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -42,12 +41,8 @@ const StartupManage: React.FC = () => {
     const matchesSector = filterSector === 'all' || startup.sector === filterSector;
     const matchesType = filterType === 'all' || startup.type === filterType;
     const matchesStatus = filterStatus === 'all' || startup.status === filterStatus;
-    const matchesTRL = filterTRL === 'all' || 
-      (filterTRL === '1-3' && startup.trlLevel <= 3) ||
-      (filterTRL === '4-6' && startup.trlLevel >= 4 && startup.trlLevel <= 6) ||
-      (filterTRL === '7-9' && startup.trlLevel >= 7);
 
-    return matchesSearch && matchesSector && matchesType && matchesStatus && matchesTRL;
+    return matchesSearch && matchesSector && matchesType && matchesStatus;
   });
 
   const getMetrics = () => {
@@ -57,12 +52,6 @@ const StartupManage: React.FC = () => {
       innovation: startups.filter(s => s.type === 'innovation').length,
       incubation: startups.filter(s => s.type === 'incubation').length
     };
-  };
-
-  const getTRLColor = (level: TRLLevel) => {
-    if (level <= 3) return 'bg-red-500';
-    if (level <= 6) return 'bg-yellow-500';
-    return 'bg-green-500';
   };
 
   const getStatusColor = (status: string) => {
@@ -268,17 +257,6 @@ const StartupManage: React.FC = () => {
               <option value="completed">Completed</option>
               <option value="dropout">Dropout</option>
             </select>
-
-            <select
-              value={filterTRL}
-              onChange={(e) => setFilterTRL(e.target.value)}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="all">All TRL Levels</option>
-              <option value="1-3">TRL 1-3</option>
-              <option value="4-6">TRL 4-6</option>
-              <option value="7-9">TRL 7-9</option>
-            </select>
           </div>
         </div>
       </Card>
@@ -294,7 +272,6 @@ const StartupManage: React.FC = () => {
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Sector</th>
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Type</th>
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Status</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">TRL Level</th>
                 <th className="text-left py-3 px-4 text-gray-300 font-medium">Email</th>
               </tr>
             </thead>
@@ -327,12 +304,6 @@ const StartupManage: React.FC = () => {
                     <span className={`text-xs px-2 py-1 rounded-full capitalize ${getStatusColor(startup.status)}`}>
                       {startup.status}
                     </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full ${getTRLColor(startup.trlLevel)}`} />
-                      <span className="text-white text-sm font-medium">TRL {startup.trlLevel}</span>
-                    </div>
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center space-x-2">

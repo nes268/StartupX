@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Search, Filter, User, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
+import { Search, User, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
 import { Mentor } from '../../types';
 import { useMentors } from '../../hooks/useMentors';
 
@@ -281,7 +281,7 @@ const Mentors: React.FC = () => {
         </Card>
       )}
 
-      {/* Search and Filter */}
+      {/* Search */}
       <Card className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
@@ -295,16 +295,6 @@ const Mentors: React.FC = () => {
                 className="pl-10"
               />
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            <select className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500">
-              <option value="all">All Expertise</option>
-              <option value="tech">Technology</option>
-              <option value="marketing">Marketing</option>
-              <option value="finance">Finance</option>
-              <option value="operations">Operations</option>
-            </select>
           </div>
         </div>
       </Card>

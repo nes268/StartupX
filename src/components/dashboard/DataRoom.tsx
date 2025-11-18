@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Search, Filter, Upload, Download, Eye, Trash2, FileText, AlertCircle, Loader2, X } from 'lucide-react';
+import { Search, Upload, Download, Eye, Trash2, FileText, AlertCircle, Loader2, X } from 'lucide-react';
 import { CreateDocumentData } from '../../types';
 import { useDocuments } from '../../hooks/useDocuments';
 import { useAuth } from '../../context/AuthContext';
@@ -11,7 +11,6 @@ import { documentsApi } from '../../services/documentsApi';
 const DataRoom: React.FC = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
   const [isUploading, setIsUploading] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [showViewModal, setShowViewModal] = useState(false);
@@ -37,10 +36,19 @@ const DataRoom: React.FC = () => {
   }, [user, refreshDocuments]);
 
   const filteredDocuments = documents.filter(doc => {
+    // For regular users (startup users), strictly filter to only show their own documents
+    if (user?.role === 'user' && user.id) {
+      // Strictly enforce: only show documents that belong to the current user
+      // If userId is missing or doesn't match, exclude the document
+      if (!doc.userId || doc.userId !== user.id) {
+        return false;
+      }
+    }
+    
+    // Apply search filter
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          doc.owner.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterType === 'all' || doc.type === filterType;
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
 
   const getFileIcon = (_type: string) => {
@@ -132,6 +140,12 @@ const DataRoom: React.FC = () => {
     if (window.confirm(`Are you sure you want to delete "${documentName}"?`)) {
       try {
         await deleteDocument(documentId);
+        // Refresh documents list to ensure only user's documents are shown
+        if (user?.role === 'user' && user.id) {
+          await refreshDocuments(user.id);
+        } else if (user?.role === 'admin') {
+          await refreshDocuments();
+        }
         alert('Document deleted successfully!');
       } catch (error) {
         console.error('Delete error:', error);
@@ -242,7 +256,7 @@ const DataRoom: React.FC = () => {
       )}
 
 
-      {/* Search and Filter */}
+      {/* Search */}
       <Card className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
@@ -256,20 +270,6 @@ const DataRoom: React.FC = () => {
                 className="pl-10"
               />
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="all">All Types</option>
-              <option value="pdf">PDF</option>
-              <option value="docx">Word</option>
-              <option value="xlsx">Excel</option>
-              <option value="pptx">PowerPoint</option>
-            </select>
           </div>
         </div>
       </Card>
@@ -341,15 +341,15 @@ const DataRoom: React.FC = () => {
             <div className="text-center py-12">
               <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-300 mb-2">
-                {searchTerm || filterType !== 'all' ? 'No documents found' : 'No documents available'}
+                {searchTerm ? 'No documents found' : 'No documents available'}
               </h3>
               <p className="text-gray-400 mb-4">
-                {searchTerm || filterType !== 'all' 
-                  ? 'Try adjusting your search or filter criteria' 
+                {searchTerm 
+                  ? 'Try adjusting your search criteria' 
                   : 'Upload your first document to get started'
                 }
               </p>
-              {!searchTerm && filterType === 'all' && (
+              {!searchTerm && (
                 <Button 
                   variant="outline" 
                   onClick={handleUploadClick}

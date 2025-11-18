@@ -59,8 +59,7 @@ const ProfileWizard: React.FC = () => {
               email: savedProfile.email,
               submissionDate: new Date().toISOString().split('T')[0],
               userId: user.id,
-              status: 'pending',
-              trlLevel: 1
+              status: 'pending'
             });
           } catch (startupError) {
             console.error('Error creating startup entry:', startupError);
