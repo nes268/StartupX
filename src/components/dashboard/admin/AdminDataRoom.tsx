@@ -175,7 +175,7 @@ const AdminDataRoom: React.FC = () => {
   };
 
   const getFileIcon = (_type: string) => {
-    return <FileText className="h-5 w-5 text-blue-400" />;
+    return <FileText className="h-5 w-5 text-blue-600" />;
   };
 
   // If a startup is selected, show its documents
@@ -189,8 +189,8 @@ const AdminDataRoom: React.FC = () => {
             Back to Startups
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-white">{selectedStartup.name} - Documents</h1>
-            <p className="text-gray-400 mt-1">View and manage all documents for this startup</p>
+            <h1 className="text-3xl font-bold text-gray-900">{selectedStartup.name} - Documents</h1>
+            <p className="text-gray-600 mt-1">View and manage all documents for this startup</p>
           </div>
         </div>
 
@@ -198,26 +198,26 @@ const AdminDataRoom: React.FC = () => {
         <Card className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium text-gray-400">Founder</label>
-              <p className="text-white">{selectedStartup.founder}</p>
+              <label className="text-sm font-medium text-gray-600">Founder</label>
+              <p className="text-gray-900">{selectedStartup.founder}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-400">Email</label>
-              <p className="text-white">{selectedStartup.email}</p>
+              <label className="text-sm font-medium text-gray-600">Email</label>
+              <p className="text-gray-900">{selectedStartup.email}</p>
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-400">Sector</label>
-              <p className="text-white">{selectedStartup.sector}</p>
+              <label className="text-sm font-medium text-gray-600">Sector</label>
+              <p className="text-gray-900">{selectedStartup.sector}</p>
             </div>
           </div>
         </Card>
 
         {/* Error Message */}
         {error && (
-          <Card className="p-4 bg-red-900/20 border border-red-600/30">
+          <Card className="p-4 bg-red-50 border border-red-200">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="h-5 w-5 text-red-400" />
-              <p className="text-red-400">{error}</p>
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-red-600">{error}</p>
             </div>
           </Card>
         )}
@@ -225,54 +225,54 @@ const AdminDataRoom: React.FC = () => {
         {/* Documents List */}
         <Card className="p-6">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-white mb-2">Documents ({startupDocuments.length})</h3>
-            <p className="text-sm text-gray-400">All documents uploaded by this startup</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Documents ({startupDocuments.length})</h3>
+            <p className="text-sm text-gray-600">All documents uploaded by this startup</p>
           </div>
 
           {loadingDocuments ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex items-center space-x-3">
-                <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
-                <span className="text-gray-400">Loading documents...</span>
+                <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+                <span className="text-gray-600">Loading documents...</span>
               </div>
             </div>
           ) : error ? (
             <div className="text-center py-12">
-              <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-red-400 mb-2">Error Loading Documents</h3>
-              <p className="text-gray-400">{error}</p>
+              <AlertCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-red-600 mb-2">Error Loading Documents</h3>
+              <p className="text-gray-600">{error}</p>
             </div>
           ) : startupDocuments.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left py-3 px-4 text-gray-300 font-medium">Document Name</th>
-                    <th className="text-left py-3 px-4 text-gray-300 font-medium">Type</th>
-                    <th className="text-left py-3 px-4 text-gray-300 font-medium">File Size</th>
-                    <th className="text-left py-3 px-4 text-gray-300 font-medium">Upload Date</th>
-                    <th className="text-left py-3 px-4 text-gray-300 font-medium">Actions</th>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-gray-700 font-medium">Document Name</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-medium">Type</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-medium">File Size</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-medium">Upload Date</th>
+                    <th className="text-left py-3 px-4 text-gray-700 font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {startupDocuments.map((doc) => (
-                    <tr key={doc.id} className="border-b border-gray-800 hover:bg-gray-700/20 transition-colors">
+                    <tr key={doc.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
                       <td className="py-4 px-4">
                         <div className="flex items-center space-x-3">
                           {getFileIcon(doc.type)}
                           <div>
-                            <span className="text-white font-medium">{doc.name}</span>
-                            <div className="text-xs text-gray-400">{doc.location}</div>
+                            <span className="text-gray-900 font-medium">{doc.name}</span>
+                            <div className="text-xs text-gray-600">{doc.location}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-gray-300 uppercase">{doc.type}</td>
-                      <td className="py-4 px-4 text-gray-300">{doc.fileSize}</td>
-                      <td className="py-4 px-4 text-gray-300">{doc.uploadDate}</td>
+                      <td className="py-4 px-4 text-gray-700 uppercase">{doc.type}</td>
+                      <td className="py-4 px-4 text-gray-700">{doc.fileSize}</td>
+                      <td className="py-4 px-4 text-gray-700">{doc.uploadDate}</td>
                       <td className="py-4 px-4">
                         <div className="flex items-center space-x-2">
                           <button 
-                            className="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
+                            className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-400/10 rounded-lg transition-colors"
                             title="Download document"
                             onClick={() => handleDownloadDocument(doc)}
                           >
@@ -287,20 +287,20 @@ const AdminDataRoom: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <FolderOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-300 mb-2">No documents found</h3>
-              <p className="text-gray-400">This startup hasn't uploaded any documents yet.</p>
+              <FolderOpen className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-700 mb-2">No documents found</h3>
+              <p className="text-gray-600">This startup hasn't uploaded any documents yet.</p>
             </div>
           )}
         </Card>
 
         {/* View Document Modal */}
         {showViewModal && selectedDocument && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/30 flex items-start justify-center z-50 p-4" style={{ paddingTop: '120px' }}>
+            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-white">Document Details</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">Document Details</h2>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -312,47 +312,47 @@ const AdminDataRoom: React.FC = () => {
 
                 <div className="space-y-6">
                   <div className="flex items-center space-x-4">
-                    <div className="h-16 w-16 bg-cyan-500 rounded-lg flex items-center justify-center">
+                    <div className="h-16 w-16 bg-[var(--accent)] rounded-lg flex items-center justify-center">
                       <FileText className="h-8 w-8 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-semibold text-white">{selectedDocument.name}</h3>
-                      <p className="text-gray-400 text-sm uppercase">{selectedDocument.type}</p>
+                      <h3 className="text-xl font-semibold text-gray-900">{selectedDocument.name}</h3>
+                      <p className="text-gray-600 text-sm uppercase">{selectedDocument.type}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div>
-                        <label className="text-sm font-medium text-gray-400">Location</label>
-                        <p className="text-white">{selectedDocument.location}</p>
+                        <label className="text-sm font-medium text-gray-600">Location</label>
+                        <p className="text-gray-900">{selectedDocument.location}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-400">Owner</label>
-                        <p className="text-white">{selectedDocument.owner}</p>
+                        <label className="text-sm font-medium text-gray-600">Owner</label>
+                        <p className="text-gray-900">{selectedDocument.owner}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-400">File Size</label>
-                        <p className="text-white">{selectedDocument.fileSize}</p>
+                        <label className="text-sm font-medium text-gray-600">File Size</label>
+                        <p className="text-gray-900">{selectedDocument.fileSize}</p>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <label className="text-sm font-medium text-gray-400">Upload Date</label>
-                        <p className="text-white">{selectedDocument.uploadDate}</p>
+                        <label className="text-sm font-medium text-gray-600">Upload Date</label>
+                        <p className="text-gray-900">{selectedDocument.uploadDate}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-400">File Type</label>
-                        <p className="text-white uppercase">{selectedDocument.type}</p>
+                        <label className="text-sm font-medium text-gray-600">File Type</label>
+                        <p className="text-gray-900 uppercase">{selectedDocument.type}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-gray-400">Document ID</label>
-                        <p className="text-white font-mono text-sm">{selectedDocument.id}</p>
+                        <label className="text-sm font-medium text-gray-600">Document ID</label>
+                        <p className="text-gray-900 font-mono text-sm">{selectedDocument.id}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex space-x-4 pt-4 border-t border-gray-700">
+                  <div className="flex space-x-4 pt-4 border-t border-gray-200">
                     <Button 
                       variant="outline" 
                       onClick={() => handleDownloadDocument(selectedDocument)}
@@ -367,7 +367,7 @@ const AdminDataRoom: React.FC = () => {
                         closeViewModal();
                         handleDeleteDocument(selectedDocument.id, selectedDocument.name);
                       }}
-                      className="flex-1 text-red-400 border-red-400 hover:bg-red-400/10"
+                      className="flex-1 text-red-600 border-red-400 hover:bg-red-400/10"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
                       Delete
@@ -388,15 +388,15 @@ const AdminDataRoom: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Data Room</h1>
-          <p className="text-gray-400 mt-1">View documents uploaded by startups</p>
+          <h1 className="text-3xl font-bold text-gray-900">Data Room</h1>
+          <p className="text-gray-600 mt-1">View documents uploaded by startups</p>
         </div>
       </div>
 
       {/* Search */}
       <Card className="p-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600" />
           <Input
             type="text"
             placeholder="Search startups by name, founder, or email..."
@@ -410,15 +410,15 @@ const AdminDataRoom: React.FC = () => {
       {/* Startups List */}
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-white mb-2">Startups ({filteredStartups.length})</h3>
-          <p className="text-sm text-gray-400">Click on a startup name to view their uploaded documents</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Startups ({filteredStartups.length})</h3>
+          <p className="text-sm text-gray-600">Click on a startup name to view their uploaded documents</p>
         </div>
 
         {startupsLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="flex items-center space-x-3">
-              <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
-              <span className="text-gray-400">Loading startups...</span>
+              <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+              <span className="text-gray-600">Loading startups...</span>
             </div>
           </div>
         ) : filteredStartups.length > 0 ? (
@@ -430,16 +430,16 @@ const AdminDataRoom: React.FC = () => {
               return (
                 <Card 
                   key={startup.id} 
-                  className="p-4 hover:bg-gray-700/20 cursor-pointer transition-colors"
+                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={() => handleStartupClick(startup)}
                 >
                   <div className="flex items-start space-x-3">
-                    <div className="h-12 w-12 bg-cyan-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="h-12 w-12 bg-[var(--accent)] rounded-lg flex items-center justify-center flex-shrink-0">
                       <Building2 className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 
-                        className="font-semibold truncate text-white hover:text-cyan-400 transition-colors cursor-pointer"
+                        className="font-semibold truncate text-gray-900 hover:text-[var(--accent)] transition-colors cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartupClick(startup);
@@ -447,7 +447,7 @@ const AdminDataRoom: React.FC = () => {
                       >
                         {startup.name}
                       </h4>
-                      <p className="text-sm text-gray-400 truncate">{startup.founder}</p>
+                      <p className="text-sm text-gray-600 truncate">{startup.founder}</p>
                       <p className="text-xs text-gray-500 truncate mt-1">{startup.email}</p>
                       <div className="flex items-center space-x-2 mt-2">
                         {(() => {
@@ -455,9 +455,9 @@ const AdminDataRoom: React.FC = () => {
                           const displayStatus = startup.status === 'dropout' ? 'dropout' : 'active';
                           return (
                             <span className={`text-xs px-2 py-1 rounded capitalize ${
-                              displayStatus === 'active' ? 'bg-green-900/30 text-green-400' :
-                              displayStatus === 'dropout' ? 'bg-red-900/30 text-red-400' :
-                              'bg-gray-900/30 text-gray-400'
+                              displayStatus === 'active' ? 'bg-green-100 text-green-700' :
+                              displayStatus === 'dropout' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
                             }`}>
                               {displayStatus}
                             </span>
@@ -465,14 +465,14 @@ const AdminDataRoom: React.FC = () => {
                         })()}
                         <span className="text-xs text-gray-500">{startup.sector}</span>
                         {docCount > 0 && (
-                          <span className="text-xs px-2 py-1 rounded bg-cyan-900/30 text-cyan-400 flex items-center gap-1">
+                          <span className="text-xs px-2 py-1 rounded bg-[var(--accent-muted)] text-[var(--accent)] flex items-center gap-1">
                             <FolderOpen className="h-3 w-3" />
                             {docCount} docs
                           </span>
                         )}
                       </div>
                     </div>
-                    <FolderOpen className="h-5 w-5 text-cyan-400 flex-shrink-0" />
+                    <FolderOpen className="h-5 w-5 text-[var(--accent)] flex-shrink-0" />
                   </div>
                 </Card>
               );
@@ -480,9 +480,9 @@ const AdminDataRoom: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-300 mb-2">No startups found</h3>
-            <p className="text-gray-400">
+            <Building2 className="h-16 w-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-2">No startups found</h3>
+            <p className="text-gray-600">
               {searchTerm ? 'Try adjusting your search criteria' : 'No startups available'}
             </p>
           </div>

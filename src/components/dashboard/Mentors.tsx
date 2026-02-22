@@ -132,8 +132,8 @@ const Mentors: React.FC = () => {
             ← Back to Mentors
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-white">Mentor Profile</h1>
-            <p className="text-gray-400 mt-1">Detailed profile of {selectedMentor.name}</p>
+            <h1 className="text-3xl font-extrabold text-[var(--text)]">Mentor Profile</h1>
+            <p className="text-[var(--text-muted)] mt-1">Detailed profile of {selectedMentor.name}</p>
           </div>
         </div>
 
@@ -141,12 +141,12 @@ const Mentors: React.FC = () => {
           {/* Profile Card */}
           <Card className="p-6">
             <div className="text-center mb-6">
-              <div className="h-24 w-24 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
+              <div className="h-24 w-24 bg-[var(--accent)] rounded-full flex items-center justify-center text-[var(--text-inverse)] font-bold text-2xl mx-auto mb-4">
                 {selectedMentor.profilePicture}
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2">{selectedMentor.name}</h2>
-              <p className="text-cyan-400 text-lg mb-3">{selectedMentor.role}</p>
-              <p className="text-gray-400">{selectedMentor.experience}</p>
+              <h2 className="text-2xl font-bold text-[var(--text)] mb-2">{selectedMentor.name}</h2>
+              <p className="text-[var(--accent)] text-lg mb-3">{selectedMentor.role}</p>
+              <p className="text-[var(--text-muted)]">{selectedMentor.experience}</p>
             </div>
 
             <div className="space-y-4">
@@ -171,42 +171,42 @@ const Mentors: React.FC = () => {
           {/* Details */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">About</h3>
-              <p className="text-gray-300 leading-relaxed">{selectedMentor.bio}</p>
+              <h3 className="text-xl font-semibold text-[var(--text)] mb-4">About</h3>
+              <p className="text-[var(--text)] leading-relaxed">{selectedMentor.bio}</p>
             </Card>
 
             <Card className="p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Expertise Areas</h3>
+              <h3 className="text-xl font-semibold text-[var(--text)] mb-4">Expertise Areas</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex items-center space-x-2">
-                  <div className="h-2 w-2 bg-cyan-400 rounded-full"></div>
-                  <span className="text-gray-300">Product Development</span>
+                  <div className="h-2 w-2 bg-[var(--accent)] rounded-full"></div>
+                  <span className="text-[var(--text)]">Product Development</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="h-2 w-2 bg-cyan-400 rounded-full"></div>
-                  <span className="text-gray-300">Fundraising</span>
+                  <div className="h-2 w-2 bg-[var(--accent)] rounded-full"></div>
+                  <span className="text-[var(--text)]">Fundraising</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="h-2 w-2 bg-cyan-400 rounded-full"></div>
-                  <span className="text-gray-300">Scaling Operations</span>
+                  <div className="h-2 w-2 bg-[var(--accent)] rounded-full"></div>
+                  <span className="text-[var(--text)]">Scaling Operations</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <div className="h-2 w-2 bg-cyan-400 rounded-full"></div>
-                  <span className="text-gray-300">Strategic Planning</span>
+                  <div className="h-2 w-2 bg-[var(--accent)] rounded-full"></div>
+                  <span className="text-[var(--text)]">Strategic Planning</span>
                 </div>
               </div>
             </Card>
 
             <Card className="p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">Contact Information</h3>
+              <h3 className="text-xl font-semibold text-[var(--text)] mb-4">Contact Information</h3>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 bg-gray-700 rounded-full flex items-center justify-center">
-                    <User className="h-4 w-4 text-gray-300" />
+                  <div className="h-8 w-8 bg-[var(--bg-muted)] rounded-full flex items-center justify-center">
+                    <User className="h-4 w-4 text-[var(--text)]" />
                   </div>
                   <div>
-                    <p className="text-gray-400 text-sm">Email</p>
-                    <p className="text-white">{selectedMentor.email}</p>
+                    <p className="text-[var(--text-muted)] text-sm">Email</p>
+                    <p className="text-[var(--text)]">{selectedMentor.email}</p>
                   </div>
                 </div>
               </div>
@@ -228,8 +228,8 @@ const Mentors: React.FC = () => {
             ← Back to Mentors
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-white">Request Session</h1>
-            <p className="text-gray-400 mt-1">Schedule a mentoring session with {selectedMentor.name}</p>
+            <h1 className="text-3xl font-extrabold text-[var(--text)]">Request Session</h1>
+            <p className="text-[var(--text-muted)] mt-1">Schedule a mentoring session with {selectedMentor.name}</p>
           </div>
         </div>
 
@@ -237,40 +237,40 @@ const Mentors: React.FC = () => {
           {submitSuccess ? (
             <div className="text-center py-8">
               <div className="flex justify-center mb-4">
-                <CheckCircle className="h-16 w-16 text-green-400" />
+                <CheckCircle className="h-16 w-16 text-[var(--accent)]" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Request Sent Successfully!</h3>
-              <p className="text-gray-400 mb-4">
+              <h3 className="text-xl font-semibold text-[var(--text)] mb-2">Request Sent Successfully!</h3>
+              <p className="text-[var(--text-muted)] mb-4">
                 Your session request has been sent to {selectedMentor.name}. They will contact you soon.
               </p>
-              <p className="text-sm text-gray-500">Redirecting back to mentors...</p>
+              <p className="text-sm text-[var(--text-subtle)]">Redirecting back to mentors...</p>
             </div>
           ) : (
             <form className="space-y-6" onSubmit={handleFormSubmit}>
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Session Details</h3>
+                <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Session Details</h3>
               </div>
 
               {submitError && (
                 <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <AlertCircle className="h-5 w-5 text-red-400" />
-                    <p className="text-red-300 text-sm">{submitError}</p>
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <p className="text-red-600 text-sm">{submitError}</p>
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text)] mb-2">
                   Selected Mentor
                 </label>
-                <div className="flex items-center space-x-3 p-3 bg-gray-700/30 rounded-lg">
-                  <div className="h-10 w-10 bg-cyan-500 rounded-full flex items-center justify-center text-white font-medium">
+                <div className="flex items-center space-x-3 p-3 bg-[var(--bg-muted)]/30 rounded-lg">
+                  <div className="h-10 w-10 bg-[var(--accent)] rounded-full flex items-center justify-center text-[var(--text-inverse)] font-medium">
                     {selectedMentor.profilePicture}
                   </div>
                   <div>
-                    <p className="text-white font-medium">{selectedMentor.name}</p>
-                    <p className="text-sm text-gray-400">{selectedMentor.role}</p>
+                    <p className="text-[var(--text)] font-medium">{selectedMentor.name}</p>
+                    <p className="text-sm text-[var(--text-muted)]">{selectedMentor.role}</p>
                   </div>
                 </div>
               </div>
@@ -287,14 +287,14 @@ const Mentors: React.FC = () => {
               />
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Topic <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-[var(--text)] mb-2">
+                  Topic <span className="text-red-600">*</span>
                 </label>
                 <select
                   name="topic"
                   value={formData.topic}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                   disabled={isSubmitting}
                 >
@@ -309,14 +309,14 @@ const Mentors: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Preferred Time Slot <span className="text-red-400">*</span>
+                <label className="block text-sm font-medium text-[var(--text)] mb-2">
+                  Preferred Time Slot <span className="text-red-600">*</span>
                 </label>
                 <select
                   name="preferredTimeSlot"
                   value={formData.preferredTimeSlot}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                   disabled={isSubmitting}
                 >
@@ -329,7 +329,7 @@ const Mentors: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-[var(--text)] mb-2">
                   Additional Notes
                 </label>
                 <textarea
@@ -337,7 +337,7 @@ const Mentors: React.FC = () => {
                   rows={4}
                   value={formData.additionalNotes}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Describe what you'd like to discuss or any specific questions you have..."
                   disabled={isSubmitting}
                 />
@@ -378,14 +378,14 @@ const Mentors: React.FC = () => {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-white">Guidance Center</h1>
-          <p className="text-gray-400 mt-1">Connect with experienced mentors to grow your startup</p>
+          <h1 className="text-3xl font-extrabold text-[var(--text)]">Guidance Center</h1>
+          <p className="text-[var(--text-muted)] mt-1">Connect with experienced mentors to grow your startup</p>
         </div>
         
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
-            <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
-            <span className="text-gray-400">Loading mentors...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+            <span className="text-[var(--text-muted)]">Loading mentors...</span>
           </div>
         </div>
       </div>
@@ -396,23 +396,23 @@ const Mentors: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Guidance Center</h1>
-        <p className="text-gray-400 mt-1">Connect with experienced mentors to grow your startup</p>
+        <h1 className="text-3xl font-extrabold text-[var(--text)]">Guidance Center</h1>
+        <p className="text-[var(--text-muted)] mt-1">Connect with experienced mentors to grow your startup</p>
       </div>
 
       {/* Error Display */}
       {error && (
         <Card className="p-4 bg-red-900/20 border-red-500/50">
           <div className="flex items-center space-x-3">
-            <AlertCircle className="h-5 w-5 text-red-400" />
+            <AlertCircle className="h-5 w-5 text-red-600" />
             <div>
-              <h3 className="text-red-400 font-medium">Error</h3>
-              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <h3 className="text-red-600 font-medium">Error</h3>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={refreshMentors}
-                className="mt-2 text-red-400 hover:text-red-300"
+                className="mt-2 text-red-600 hover:text-red-600"
               >
                 Try Again
               </Button>
@@ -426,7 +426,7 @@ const Mentors: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
               <Input
                 type="text"
                 placeholder="Search mentors by name, expertise, or bio..."
@@ -444,15 +444,15 @@ const Mentors: React.FC = () => {
         {filteredMentors.map((mentor) => (
           <Card key={mentor.id} className="p-6" hover>
             <div className="text-center mb-4">
-              <div className="h-16 w-16 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">
+              <div className="h-16 w-16 bg-[var(--accent)] rounded-full flex items-center justify-center text-[var(--text-inverse)] font-bold text-xl mx-auto mb-3">
                 {mentor.profilePicture}
               </div>
-              <h3 className="text-xl font-semibold text-white mb-1">{mentor.name}</h3>
-              <p className="text-cyan-400 text-sm mb-2">{mentor.role}</p>
-              <p className="text-gray-400 text-sm">{mentor.experience}</p>
+              <h3 className="text-xl font-semibold text-[var(--text)] mb-1">{mentor.name}</h3>
+              <p className="text-[var(--accent)] text-sm mb-2">{mentor.role}</p>
+              <p className="text-[var(--text-muted)] text-sm">{mentor.experience}</p>
             </div>
 
-            <p className="text-gray-300 text-sm mb-6 line-clamp-3">
+            <p className="text-[var(--text)] text-sm mb-6 line-clamp-3">
               {mentor.bio}
             </p>
 
@@ -472,11 +472,11 @@ const Mentors: React.FC = () => {
 
       {filteredMentors.length === 0 && (
         <Card className="p-12 text-center">
-          <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-300 mb-2">
+          <User className="h-12 w-12 text-[var(--text-muted)] mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-[var(--text)] mb-2">
             {searchTerm ? 'No mentors found' : 'No mentors available'}
           </h3>
-          <p className="text-gray-400">
+          <p className="text-[var(--text-muted)]">
             {searchTerm 
               ? 'Try adjusting your search criteria' 
               : 'Mentors will appear here once they are added by administrators'

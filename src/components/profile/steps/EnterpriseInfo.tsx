@@ -83,12 +83,12 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ data, updateData, onNex
   return (
     <div className="p-8">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 bg-cyan-500/10 rounded-lg">
-          <Building2 className="h-6 w-6 text-cyan-400" />
+        <div className="p-2 bg-[var(--accent-muted)] rounded-lg">
+          <Building2 className="h-6 w-6 text-[var(--accent)]" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Enterprise Information</h2>
-          <p className="text-gray-400">Tell us about your startup</p>
+          <h2 className="text-2xl font-bold text-[var(--text)]">Enterprise Information</h2>
+          <p className="text-[var(--text-muted)]">Tell us about your startup</p>
         </div>
       </div>
 
@@ -136,7 +136,7 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ data, updateData, onNex
 
         {/* Application Type */}
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-300">Application Type</label>
+          <label className="block text-sm font-medium text-[var(--text-muted)]">Application Type</label>
           <div className="grid grid-cols-2 gap-3">
             {(['innovation', 'incubation'] as const).map((type) => (
               <button
@@ -145,8 +145,8 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ data, updateData, onNex
                 onClick={() => setFormData({ ...formData, applicationType: type })}
                 className={`p-4 rounded-lg border transition-all duration-200 ${
                   formData.applicationType === type
-                    ? 'border-cyan-500 bg-cyan-500/10 text-cyan-400'
-                    : 'border-gray-600 bg-gray-700/50 text-gray-300 hover:bg-gray-700'
+                    ? 'border-[var(--accent)] bg-[var(--accent-muted)] text-[var(--accent)]'
+                    : 'border-[var(--border)] bg-[var(--bg-muted)] text-[var(--text)] hover:border-[var(--accent-muted-border)]'
                 }`}
               >
                 <span className="text-sm font-medium capitalize">{type}</span>
@@ -157,12 +157,12 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ data, updateData, onNex
 
         {/* Sector Selection */}
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-300">Select Sector</label>
+          <label className="block text-sm font-medium text-[var(--text-muted)]">Select Sector</label>
           <select
             name="sector"
             value={formData.sector}
             onChange={handleChange}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
             <option value="">Choose a sector</option>
             {sectors.map((sector) => (
@@ -171,13 +171,13 @@ const EnterpriseInfo: React.FC<EnterpriseInfoProps> = ({ data, updateData, onNex
               </option>
             ))}
           </select>
-          {errors.sector && <p className="text-sm text-red-400">{errors.sector}</p>}
+          {errors.sector && <p className="text-sm text-red-600">{errors.sector}</p>}
         </div>
 
         {/* Co-founders */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-300">Co-founder Names (Optional)</label>
+            <label className="block text-sm font-medium text-[var(--text-muted)]">Co-founder Names (Optional)</label>
             <Button
               type="button"
               variant="ghost"

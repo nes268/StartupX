@@ -31,7 +31,7 @@ const Fundraising: React.FC = () => {
       case 'current':
         return <Clock className="h-5 w-5 text-blue-400" />;
       default:
-        return <div className="h-5 w-5 rounded-full border-2 border-gray-600"></div>;
+        return <div className="h-5 w-5 rounded-full border-2 border-[var(--border)]"></div>;
     }
   };
 
@@ -42,7 +42,7 @@ const Fundraising: React.FC = () => {
       case 'current':
         return 'bg-blue-400';
       default:
-        return 'bg-gray-600';
+        return 'bg-[var(--text-subtle)]';
     }
   };
 
@@ -110,18 +110,18 @@ const Fundraising: React.FC = () => {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Fundraising Dashboard</h1>
-        <p className="text-gray-400 mt-1">Track your funding journey and progress across all stages</p>
+        <h1 className="text-3xl font-extrabold text-[var(--text)]">Fundraising Dashboard</h1>
+        <p className="text-[var(--text-muted)] mt-1">Track your funding journey and progress across all stages</p>
       </div>
 
       {/* Funding Stages Tabs */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white flex items-center">
-            <TrendingUp className="h-5 w-5 mr-2 text-cyan-400" />
+          <h2 className="text-xl font-semibold text-[var(--text)] flex items-center">
+            <TrendingUp className="h-5 w-5 mr-2 text-[var(--accent)]" />
             Funding Stages
           </h2>
-          <div className="text-sm text-gray-400">
+          <div className="text-sm text-[var(--text-muted)]">
             {fundingStages.filter(s => s.status === 'completed').length}/{fundingStages.length} completed
           </div>
         </div>
@@ -134,8 +134,8 @@ const Fundraising: React.FC = () => {
               onClick={() => handleTabClick(stage.id)}
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                 activeTab === stage.id
-                  ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
-                  : 'bg-gray-700/50 text-gray-300 hover:bg-gray-600/50 border border-gray-600'
+                  ? 'bg-[var(--accent-muted)] text-[var(--accent)] border border-[var(--accent-muted-border)]'
+                  : 'bg-[var(--bg-muted)] text-[var(--text)] hover:bg-[var(--bg-subtle)] border border-[var(--border)]'
               }`}
             >
               {getStatusIcon(stage.status)}
@@ -150,35 +150,35 @@ const Fundraising: React.FC = () => {
           <div className="space-y-6">
             {/* Stage Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-gray-700/30 rounded-lg">
-                <div className="text-2xl font-bold text-white mb-1">
+              <div className="text-center p-4 bg-[var(--bg-muted)] rounded-lg">
+                <div className="text-2xl font-bold text-[var(--text)] mb-1">
                   ${((currentStageData.raisedAmount || 0) / 1000).toFixed(0)}K
                 </div>
-                <div className="text-sm text-gray-400">Amount Raised</div>
+                <div className="text-sm text-[var(--text-muted)]">Amount Raised</div>
               </div>
-              <div className="text-center p-4 bg-gray-700/30 rounded-lg">
-                <div className="text-2xl font-bold text-cyan-400 mb-1">
+              <div className="text-center p-4 bg-[var(--bg-muted)] rounded-lg">
+                <div className="text-2xl font-bold text-[var(--accent)] mb-1">
                   ${((currentStageData.targetAmount || 0) / 1000).toFixed(0)}K
                 </div>
-                <div className="text-sm text-gray-400">Target Amount</div>
+                <div className="text-sm text-[var(--text-muted)]">Target Amount</div>
               </div>
-              <div className="text-center p-4 bg-gray-700/30 rounded-lg">
+              <div className="text-center p-4 bg-[var(--bg-muted)] rounded-lg">
                 <div className="text-2xl font-bold text-emerald-400 mb-1">
                   {currentStageData.progress}%
                 </div>
-                <div className="text-sm text-gray-400">Progress</div>
+                <div className="text-sm text-[var(--text-muted)]">Progress</div>
               </div>
             </div>
 
             {/* Progress Bar */}
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-300">{currentStageData.name} Stage Progress</span>
-                <span className="text-gray-400">
+                <span className="text-[var(--text)]">{currentStageData.name} Stage Progress</span>
+                <span className="text-[var(--text-muted)]">
                   ${(currentStageData.raisedAmount || 0).toLocaleString()} / ${(currentStageData.targetAmount || 0).toLocaleString()}
                 </span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-4">
+              <div className="w-full bg-[var(--bg-muted)] rounded-full h-4">
                 <div 
                   className={`h-4 rounded-full transition-all duration-700 ${getProgressColor(currentStageData.status)}`}
                   style={{ width: `${Math.min(currentStageData.progress, 100)}%` }}
@@ -187,10 +187,10 @@ const Fundraising: React.FC = () => {
             </div>
 
             {/* Stage Description and Actions */}
-            <div className="flex items-center justify-between p-4 bg-gray-700/20 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-[var(--bg-muted)] rounded-lg">
               <div>
-                <h3 className="text-lg font-medium text-white mb-1">{currentStageData.name}</h3>
-                <p className="text-gray-400 text-sm">{currentStageData.description}</p>
+                <h3 className="text-lg font-medium text-[var(--text)] mb-1">{currentStageData.name}</h3>
+                <p className="text-[var(--text-muted)] text-sm">{currentStageData.description}</p>
               </div>
               <div className="flex space-x-2">
                 <Button 
@@ -219,15 +219,15 @@ const Fundraising: React.FC = () => {
 
       {/* Edit Form Modal */}
       {showEditForm && editingStage && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4" style={{ paddingTop: '120px' }}>
           <Card className="p-6 max-w-md w-full">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-[var(--text)]">
                 Edit {fundingStages.find(s => s.id === editingStage)?.name} Stage
               </h3>
               <button 
                 onClick={handleCancel}
-                className="text-gray-400 hover:text-white transition-colors p-1 hover:bg-gray-700 rounded"
+                className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors p-1 hover:bg-[var(--border)] rounded"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -237,7 +237,7 @@ const Fundraising: React.FC = () => {
             
             <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Target Amount ($)</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-2">Target Amount ($)</label>
                 <input 
                   type="number"
                   name="targetAmount"
@@ -245,13 +245,13 @@ const Fundraising: React.FC = () => {
                   onChange={handleInputChange}
                   min="0"
                   step="0.01"
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="Enter target amount"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Amount Raised ($)</label>
+                <label className="block text-sm font-medium text-[var(--text)] mb-2">Amount Raised ($)</label>
                 <input 
                   type="number"
                   name="raisedAmount"
@@ -259,7 +259,7 @@ const Fundraising: React.FC = () => {
                   onChange={handleInputChange}
                   min="0"
                   step="0.01"
-                  className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   placeholder="Enter amount raised"
                 />
               </div>

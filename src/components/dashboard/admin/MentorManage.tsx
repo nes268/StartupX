@@ -136,15 +136,15 @@ const MentorManage: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Mentor Management</h1>
-            <p className="text-gray-400 mt-1">Manage mentors available to startups</p>
+            <h1 className="text-3xl font-bold text-gray-900">Mentor Management</h1>
+            <p className="text-gray-600 mt-1">Manage mentors available to startups</p>
           </div>
         </div>
         
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
-            <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
-            <span className="text-gray-400">Loading mentors...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+            <span className="text-gray-600">Loading mentors...</span>
           </div>
         </div>
       </div>
@@ -159,10 +159,10 @@ const MentorManage: React.FC = () => {
             ← Back to Mentors
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-white">
+            <h1 className="text-3xl font-bold text-gray-900">
               {editingMentor ? 'Edit Mentor' : 'Add New Mentor'}
             </h1>
-            <p className="text-gray-400 mt-1">
+            <p className="text-gray-600 mt-1">
               {editingMentor ? 'Update mentor information' : 'Add a new mentor to the platform'}
             </p>
           </div>
@@ -170,10 +170,10 @@ const MentorManage: React.FC = () => {
 
         <Card className="p-6 max-w-4xl">
           {successMessage && (
-            <div className="mb-4 p-4 bg-green-900/20 border border-green-500/50 rounded-lg">
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center space-x-3">
                 <CheckCircle className="h-5 w-5 text-green-400" />
-                <p className="text-green-300">{successMessage}</p>
+                <p className="text-green-700">{successMessage}</p>
               </div>
             </div>
           )}
@@ -223,13 +223,13 @@ const MentorManage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Bio</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
               <textarea
                 name="bio"
                 value={formData.bio}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Brief bio and expertise areas..."
                 required
                 disabled={isSubmitting}
@@ -262,8 +262,8 @@ const MentorManage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Mentor Management</h1>
-          <p className="text-gray-400 mt-1">Manage mentors available to startups</p>
+          <h1 className="text-3xl font-bold text-gray-900">Mentor Management</h1>
+          <p className="text-gray-600 mt-1">Manage mentors available to startups</p>
         </div>
         <Button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2">
           <Plus className="h-4 w-4" />
@@ -273,17 +273,17 @@ const MentorManage: React.FC = () => {
 
       {/* Error Display */}
       {error && (
-        <Card className="p-4 bg-red-900/20 border-red-500/50">
+        <Card className="p-4 bg-red-50 border-red-200">
           <div className="flex items-center space-x-3">
-            <AlertCircle className="h-5 w-5 text-red-400" />
+            <AlertCircle className="h-5 w-5 text-red-600" />
             <div>
-              <h3 className="text-red-400 font-medium">Error</h3>
-              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <h3 className="text-red-600 font-medium">Error</h3>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={refreshMentors}
-                className="mt-2 text-red-400 hover:text-red-300"
+                className="mt-2 text-red-600 hover:text-red-600"
               >
                 Try Again
               </Button>
@@ -298,7 +298,7 @@ const MentorManage: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600" />
               <Input
                 type="text"
                 placeholder="Search mentors..."
@@ -318,12 +318,12 @@ const MentorManage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="h-12 w-12 bg-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  <div className="h-12 w-12 bg-[var(--accent)] rounded-full flex items-center justify-center text-gray-900 font-bold text-sm">
                     {mentor.profilePicture || getInitials(mentor.name)}
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">{mentor.name}</h3>
-                    <p className="text-sm text-cyan-400">{mentor.role}</p>
+                    <h3 className="text-lg font-semibold text-gray-900">{mentor.name}</h3>
+                    <p className="text-sm text-[var(--accent)]">{mentor.role}</p>
                   </div>
                 </div>
                 <div className="flex space-x-1">
@@ -331,21 +331,21 @@ const MentorManage: React.FC = () => {
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => handleDelete(mentor.id)}>
-                    <Trash2 className="h-4 w-4 text-red-400" />
+                    <Trash2 className="h-4 w-4 text-red-600" />
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center text-sm text-gray-400">
+                <div className="flex items-center text-sm text-gray-600">
                   <Mail className="h-4 w-4 mr-2" />
                   <span>{mentor.email}</span>
                 </div>
                 
-                <p className="text-sm text-gray-300">{mentor.experience}</p>
+                <p className="text-sm text-gray-700">{mentor.experience}</p>
               </div>
 
-              <p className="text-sm text-gray-400 line-clamp-3">{mentor.bio}</p>
+              <p className="text-sm text-gray-600 line-clamp-3">{mentor.bio}</p>
             </div>
           </Card>
         ))}
@@ -353,11 +353,11 @@ const MentorManage: React.FC = () => {
 
       {filteredMentors.length === 0 && (
         <Card className="p-12 text-center">
-          <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-300 mb-2">
+          <User className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-700 mb-2">
             {searchTerm ? 'No mentors found' : 'No mentors available'}
           </h3>
-          <p className="text-gray-400 mb-6">
+          <p className="text-gray-600 mb-6">
             {searchTerm 
               ? 'Try adjusting your search criteria' 
               : 'Add your first mentor to get started'

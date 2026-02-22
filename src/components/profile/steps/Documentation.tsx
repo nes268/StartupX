@@ -149,33 +149,33 @@ const Documentation: React.FC<DocumentationProps> = ({ data, updateData, onNext,
   return (
     <div className="p-8">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 bg-cyan-500/10 rounded-lg">
-          <FileText className="h-6 w-6 text-cyan-400" />
+        <div className="p-2 bg-[var(--accent-muted)] rounded-lg">
+          <FileText className="h-6 w-6 text-[var(--accent)]" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Documentation Upload</h2>
-          <p className="text-gray-400">Upload your required documents</p>
+          <h2 className="text-2xl font-bold text-[var(--text)]">Documentation Upload</h2>
+          <p className="text-[var(--text-muted)]">Upload your required documents</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           {documents.map((doc) => (
-            <div key={doc.key} className="border border-gray-700 rounded-lg p-4">
+            <div key={doc.key} className="border border-[var(--border)] rounded-lg p-4 bg-[var(--bg-subtle)]">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-2">
-                  <h3 className="text-lg font-medium text-white">{doc.label}</h3>
-                  {doc.required && <span className="text-red-400 text-sm">*Required</span>}
+                  <h3 className="text-lg font-medium text-[var(--text)]">{doc.label}</h3>
+                  {doc.required && <span className="text-red-600 text-sm">*Required</span>}
                 </div>
                 {formData[doc.key] && (
-                  <div className="flex items-center text-green-400 text-sm">
+                  <div className="flex items-center text-[var(--accent)] text-sm">
                     <Check className="h-4 w-4 mr-1" />
                     Uploaded
                   </div>
                 )}
               </div>
               
-              <p className="text-sm text-gray-400 mb-3">{doc.description}</p>
+              <p className="text-sm text-[var(--text-muted)] mb-3">{doc.description}</p>
               
               <input
                 type="file"
@@ -209,7 +209,7 @@ const Documentation: React.FC<DocumentationProps> = ({ data, updateData, onNext,
                 </Button>
                 
                 {formData[doc.key] && !uploading[doc.key] && (
-                  <span className="text-sm text-gray-300">
+                  <span className="text-sm text-[var(--text-muted)]">
                     {documentNames[doc.key] || (formData[doc.key].includes('/') 
                       ? formData[doc.key].split('/').pop() 
                       : formData[doc.key])}
@@ -218,7 +218,7 @@ const Documentation: React.FC<DocumentationProps> = ({ data, updateData, onNext,
               </div>
               
               {errors[doc.key] && (
-                <p className="text-sm text-red-400 mt-2">{errors[doc.key]}</p>
+                <p className="text-sm text-red-600 mt-2">{errors[doc.key]}</p>
               )}
             </div>
           ))}

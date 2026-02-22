@@ -17,19 +17,19 @@ const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900';
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--bg-surface)]';
   
   const variants = {
-    primary: 'bg-cyan-600 hover:bg-cyan-700 text-white focus:ring-cyan-500',
-    secondary: 'bg-gray-700 hover:bg-gray-600 text-white focus:ring-gray-500',
-    outline: 'border border-gray-600 hover:bg-gray-700 text-gray-300 hover:text-white focus:ring-gray-500',
-    ghost: 'hover:bg-gray-700 text-gray-300 hover:text-white focus:ring-gray-500',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
+    primary: 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white focus:ring-[var(--accent)] hover:shadow-lg hover:shadow-[var(--accent)]/20',
+    secondary: 'bg-[var(--text-muted)] hover:bg-[var(--text)] text-white focus:ring-[var(--text-muted)]',
+    outline: 'border border-[var(--border)] hover:bg-[var(--bg-muted)] text-[var(--text)] focus:ring-[var(--border)]',
+    ghost: 'hover:bg-[var(--bg-muted)] text-[var(--text)] focus:ring-[var(--border)]',
+    danger: 'bg-red-500 hover:bg-red-600 text-white focus:ring-red-500',
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-5 py-2.5 text-sm',
     lg: 'px-6 py-3 text-base',
   };
 

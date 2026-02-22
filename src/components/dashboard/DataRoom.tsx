@@ -52,7 +52,7 @@ const DataRoom: React.FC = () => {
   });
 
   const getFileIcon = (_type: string) => {
-    return <FileText className="h-5 w-5 text-blue-400" />;
+    return <FileText className="h-5 w-5 text-[var(--accent)]" />;
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -190,15 +190,15 @@ const DataRoom: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Data Room</h1>
-            <p className="text-gray-400 mt-1">Manage your startup documents and files</p>
+            <h1 className="text-3xl font-extrabold text-[var(--text)]">Data Room</h1>
+            <p className="text-[var(--text-muted)] mt-1">Manage your startup documents and files</p>
           </div>
         </div>
         
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
-            <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
-            <span className="text-gray-400">Loading documents...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+            <span className="text-[var(--text-muted)]">Loading documents...</span>
           </div>
         </div>
       </div>
@@ -210,8 +210,8 @@ const DataRoom: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Data Room</h1>
-          <p className="text-gray-400 mt-1">Manage your startup documents and files</p>
+          <h1 className="text-3xl font-extrabold text-[var(--text)]">Data Room</h1>
+          <p className="text-[var(--text-muted)] mt-1">Manage your startup documents and files</p>
         </div>
         <div className="flex items-center space-x-2">
           <input
@@ -238,15 +238,15 @@ const DataRoom: React.FC = () => {
       {error && (
         <Card className="p-4 bg-red-900/20 border-red-500/50">
           <div className="flex items-center space-x-3">
-            <AlertCircle className="h-5 w-5 text-red-400" />
+            <AlertCircle className="h-5 w-5 text-red-600" />
             <div>
-              <h3 className="text-red-400 font-medium">Error</h3>
-              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <h3 className="text-red-600 font-medium">Error</h3>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={refreshDocuments}
-                className="mt-2 text-red-400 hover:text-red-300"
+                className="mt-2 text-red-600 hover:text-red-600"
               >
                 Try Again
               </Button>
@@ -261,7 +261,7 @@ const DataRoom: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
               <Input
                 type="text"
                 placeholder="Search documents..."
@@ -277,55 +277,55 @@ const DataRoom: React.FC = () => {
       {/* Documents Table */}
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-white mb-2">Documents</h3>
-          <p className="text-sm text-gray-400">Manage and organize your startup documents</p>
+          <h3 className="text-lg font-semibold text-[var(--text)] mb-2">Documents</h3>
+          <p className="text-sm text-[var(--text-muted)]">Manage and organize your startup documents</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">Document Name</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">Location</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">Owner</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">File Size</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">Upload Date</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-medium">Actions</th>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Document Name</th>
+                <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Location</th>
+                <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Owner</th>
+                <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">File Size</th>
+                <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Upload Date</th>
+                <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredDocuments.map((doc) => (
-                <tr key={doc.id} className="border-b border-gray-800 hover:bg-gray-700/20 transition-colors">
+                <tr key={doc.id} className="border-b border-[var(--border)] hover:bg-[var(--bg-muted)] transition-colors">
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-3">
                       {getFileIcon(doc.type)}
                       <div>
-                        <span className="text-white font-medium">{doc.name}</span>
-                        <div className="text-xs text-gray-400 uppercase">{doc.type}</div>
+                        <span className="text-[var(--text)] font-medium">{doc.name}</span>
+                        <div className="text-xs text-[var(--text-muted)] uppercase">{doc.type}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-gray-300">{doc.location}</td>
-                  <td className="py-4 px-4 text-gray-300">{doc.owner}</td>
-                  <td className="py-4 px-4 text-gray-300">{doc.fileSize}</td>
-                  <td className="py-4 px-4 text-gray-300">{doc.uploadDate}</td>
+                  <td className="py-4 px-4 text-[var(--text-muted)]">{doc.location}</td>
+                  <td className="py-4 px-4 text-[var(--text-muted)]">{doc.owner}</td>
+                  <td className="py-4 px-4 text-[var(--text-muted)]">{doc.fileSize}</td>
+                  <td className="py-4 px-4 text-[var(--text-muted)]">{doc.uploadDate}</td>
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-2">
                       <button 
-                        className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 rounded-lg transition-colors"
+                        className="p-2 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-muted)] rounded-lg transition-colors"
                         title="View document"
                         onClick={() => handleViewDocument(doc)}
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button 
-                        className="p-2 text-gray-400 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-lg transition-colors"
+                        className="p-2 text-[var(--text-muted)] hover:text-[var(--accent)] hover:bg-[var(--accent-muted)] rounded-lg transition-colors"
                         title="Download document"
                         onClick={() => handleDownloadDocument(doc)}
                       >
                         <Download className="h-4 w-4" />
                       </button>
                       <button 
-                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+                        className="p-2 text-[var(--text-muted)] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete document"
                         onClick={() => handleDeleteDocument(doc.id, doc.name)}
                       >
@@ -339,11 +339,11 @@ const DataRoom: React.FC = () => {
           </table>
           {filteredDocuments.length === 0 && (
             <div className="text-center py-12">
-              <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-300 mb-2">
+              <FileText className="h-16 w-16 text-[var(--text-muted)] mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-[var(--text-muted)] mb-2">
                 {searchTerm ? 'No documents found' : 'No documents available'}
               </h3>
-              <p className="text-gray-400 mb-4">
+              <p className="text-[var(--text-muted)] mb-4">
                 {searchTerm 
                   ? 'Try adjusting your search criteria' 
                   : 'Upload your first document to get started'
@@ -366,11 +366,11 @@ const DataRoom: React.FC = () => {
 
       {/* View Document Modal */}
       {showViewModal && selectedDocument && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 p-4" style={{ paddingTop: '120px' }}>
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Document Details</h2>
+                <h2 className="text-2xl font-bold text-[var(--text)]">Document Details</h2>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -383,12 +383,12 @@ const DataRoom: React.FC = () => {
               <div className="space-y-6">
                 {/* Document Icon and Name */}
                 <div className="flex items-center space-x-4">
-                  <div className="h-16 w-16 bg-cyan-500 rounded-lg flex items-center justify-center">
-                    <FileText className="h-8 w-8 text-white" />
+                  <div className="h-16 w-16 bg-[var(--accent)] rounded-lg flex items-center justify-center">
+                    <FileText className="h-8 w-8 text-[var(--text-inverse)]" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-white">{selectedDocument.name}</h3>
-                    <p className="text-gray-400 text-sm uppercase">{selectedDocument.type}</p>
+                    <h3 className="text-xl font-semibold text-[var(--text)]">{selectedDocument.name}</h3>
+                    <p className="text-[var(--text-muted)] text-sm uppercase">{selectedDocument.type}</p>
                   </div>
                 </div>
 
@@ -396,36 +396,36 @@ const DataRoom: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div>
-                      <label className="text-sm font-medium text-gray-400">Location</label>
-                      <p className="text-white">{selectedDocument.location}</p>
+                      <label className="text-sm font-medium text-[var(--text-muted)]">Location</label>
+                      <p className="text-[var(--text)]">{selectedDocument.location}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-400">Owner</label>
-                      <p className="text-white">{selectedDocument.owner}</p>
+                      <label className="text-sm font-medium text-[var(--text-muted)]">Owner</label>
+                      <p className="text-[var(--text)]">{selectedDocument.owner}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-400">File Size</label>
-                      <p className="text-white">{selectedDocument.fileSize}</p>
+                      <label className="text-sm font-medium text-[var(--text-muted)]">File Size</label>
+                      <p className="text-[var(--text)]">{selectedDocument.fileSize}</p>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div>
-                      <label className="text-sm font-medium text-gray-400">Upload Date</label>
-                      <p className="text-white">{selectedDocument.uploadDate}</p>
+                      <label className="text-sm font-medium text-[var(--text-muted)]">Upload Date</label>
+                      <p className="text-[var(--text)]">{selectedDocument.uploadDate}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-400">File Type</label>
-                      <p className="text-white uppercase">{selectedDocument.type}</p>
+                      <label className="text-sm font-medium text-[var(--text-muted)]">File Type</label>
+                      <p className="text-[var(--text)] uppercase">{selectedDocument.type}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-400">Document ID</label>
-                      <p className="text-white font-mono text-sm">{selectedDocument.id}</p>
+                      <label className="text-sm font-medium text-[var(--text-muted)]">Document ID</label>
+                      <p className="text-[var(--text)] font-mono text-sm">{selectedDocument.id}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-4 pt-4 border-t border-gray-700">
+                <div className="flex space-x-4 pt-4 border-t border-[var(--border)]">
                   <Button 
                     variant="outline" 
                     onClick={() => handleDownloadDocument(selectedDocument)}
@@ -440,7 +440,7 @@ const DataRoom: React.FC = () => {
                       closeViewModal();
                       handleDeleteDocument(selectedDocument.id, selectedDocument.name);
                     }}
-                    className="flex-1 text-red-400 border-red-400 hover:bg-red-400/10"
+                    className="flex-1 text-red-600 border-red-500 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete

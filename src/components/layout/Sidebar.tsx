@@ -50,40 +50,40 @@ const Sidebar: React.FC = () => {
   const navItems = user?.role === 'admin' ? adminNavItems : userNavItems;
 
   return (
-    <div className="fixed left-0 top-0 w-56 bg-gray-800 border-r border-gray-700 flex flex-col h-screen overflow-hidden z-10">
+    <div className="fixed left-0 top-0 w-56 bg-[var(--bg-surface)] border-r border-[var(--border-muted)] flex flex-col h-screen overflow-hidden z-10 shadow-[var(--shadow-sm)]">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-700 flex-shrink-0">
+      <div className="p-6 border-b border-[var(--border-muted)] flex-shrink-0">
         <div className="flex items-center">
-          <span className="text-xl font-bold text-white">CITBIF</span>
+          <span className="text-xl font-semibold text-[var(--text)]">StartupX</span>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             end={item.path === '/dashboard' || item.path === '/admin/dashboard'}
             className={({ isActive }) =>
-              `flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+              `flex items-center space-x-3 px-4 py-2.5 rounded-xl transition-colors ${
                 isActive
-                  ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
-                  : 'text-gray-300 hover:text-white hover:bg-gray-700'
+                  ? 'bg-[var(--accent-muted)] text-[var(--accent)]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--bg-muted)]'
               }`
             }
           >
             <item.icon className="h-5 w-5" />
-            <span>{item.label}</span>
+            <span className="font-medium">{item.label}</span>
           </NavLink>
         ))}
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-gray-700 flex-shrink-0">
+      <div className="p-4 border-t border-[var(--border-muted)] flex-shrink-0">
         <button
           onClick={handleLogout}
-          className="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-red-600/10 hover:border hover:border-red-500/20 w-full transition-colors"
+          className="flex items-center space-x-3 px-4 py-2.5 rounded-full text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-red-50 hover:text-red-600 w-full transition-colors font-medium"
         >
           <LogOut className="h-5 w-5" />
           <span>Logout</span>

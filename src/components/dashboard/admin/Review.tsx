@@ -156,7 +156,7 @@ const Review: React.FC = () => {
   };
 
   const getTypeColor = (type: string) => {
-    return type === 'incubation' ? 'bg-blue-900/30 text-blue-400' : 'bg-purple-900/30 text-purple-400';
+    return type === 'incubation' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700';
   };
 
   // Review page shows actual status from database: 'approved', 'rejected', or 'pending'
@@ -165,13 +165,13 @@ const Review: React.FC = () => {
     const normalizedStatus = normalizeStatusForReview(status);
     switch (normalizedStatus) {
       case 'approved':
-        return 'bg-green-900/30 text-green-400';
+        return 'bg-green-100 text-green-700';
       case 'rejected':
-        return 'bg-red-900/30 text-red-400';
+        return 'bg-red-100 text-red-700';
       case 'pending':
-        return 'bg-yellow-900/30 text-yellow-400';
+        return 'bg-yellow-100 text-yellow-700';
       default:
-        return 'bg-gray-900/30 text-gray-400';
+        return 'bg-gray-100 text-gray-600';
     }
   };
 
@@ -197,8 +197,8 @@ const Review: React.FC = () => {
             ← Back to Review List
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-white">Startup Profile Review</h1>
-            <p className="text-gray-400 mt-1">{selectedStartup.name}</p>
+            <h1 className="text-3xl font-bold text-gray-900">Startup Profile Review</h1>
+            <p className="text-gray-600 mt-1">{selectedStartup.name}</p>
           </div>
         </div>
 
@@ -207,28 +207,28 @@ const Review: React.FC = () => {
             {/* Main Info */}
             <div className="lg:col-span-2 space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-white mb-4">Basic Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Startup Name</label>
-                    <p className="text-white font-medium">{selectedStartup.name}</p>
+                    <label className="block text-sm text-gray-600 mb-1">Startup Name</label>
+                    <p className="text-gray-900 font-medium">{selectedStartup.name}</p>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Founder</label>
-                    <p className="text-white font-medium">{selectedStartup.founder}</p>
+                    <label className="block text-sm text-gray-600 mb-1">Founder</label>
+                    <p className="text-gray-900 font-medium">{selectedStartup.founder}</p>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Sector</label>
-                    <p className="text-white font-medium">{selectedStartup.sector}</p>
+                    <label className="block text-sm text-gray-600 mb-1">Sector</label>
+                    <p className="text-gray-900 font-medium">{selectedStartup.sector}</p>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Type</label>
+                    <label className="block text-sm text-gray-600 mb-1">Type</label>
                     <span className={`text-xs px-2 py-1 rounded-full capitalize ${getTypeColor(selectedStartup.type)}`}>
                       {selectedStartup.type}
                     </span>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Status</label>
+                    <label className="block text-sm text-gray-600 mb-1">Status</label>
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(selectedStartup.status)}
                       <span className={`text-xs px-2 py-1 rounded-full capitalize ${getStatusColor(selectedStartup.status)}`}>
@@ -237,8 +237,8 @@ const Review: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-400 mb-1">Email</label>
-                    <p className="text-white font-medium">{selectedStartup.email}</p>
+                    <label className="block text-sm text-gray-600 mb-1">Email</label>
+                    <p className="text-gray-900 font-medium">{selectedStartup.email}</p>
                   </div>
                 </div>
               </div>
@@ -249,7 +249,7 @@ const Review: React.FC = () => {
             {normalizeStatusForReview(selectedStartup.status) === 'pending' && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-4">Review Actions</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Actions</h3>
                   <div className="space-y-3">
                     <Button 
                       variant="primary" 
@@ -293,8 +293,8 @@ const Review: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Application Review</h1>
-          <p className="text-gray-400 mt-1">Review and approve startup applications</p>
+          <h1 className="text-3xl font-bold text-gray-900">Application Review</h1>
+          <p className="text-gray-600 mt-1">Review and approve startup applications</p>
         </div>
         <Button
           variant="outline"
@@ -313,19 +313,19 @@ const Review: React.FC = () => {
         <div className="flex space-x-6 mt-4">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-gray-600">
               Pending: {startups.filter(s => normalizeStatusForReview(s.status) === 'pending').length}
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-gray-600">
               Approved: {startups.filter(s => normalizeStatusForReview(s.status) === 'approved').length}
             </span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-gray-600">
               Rejected: {startups.filter(s => normalizeStatusForReview(s.status) === 'rejected').length}
             </span>
           </div>
@@ -337,7 +337,7 @@ const Review: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-600" />
               <Input
                 type="text"
                 placeholder="Search startups..."
@@ -348,11 +348,11 @@ const Review: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
+            <Filter className="h-4 w-4 text-gray-600" />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="pending">Pending Review</option>
               <option value="approved">Approved</option>
@@ -366,9 +366,9 @@ const Review: React.FC = () => {
       {/* Background refresh indicator */}
       {isLoading && applications.length > 0 && (
         <div className="fixed top-20 right-4 z-50">
-          <div className="flex items-center space-x-2 bg-gray-800 px-3 py-2 rounded-lg border border-gray-700 shadow-lg">
-            <RefreshCw className="h-4 w-4 text-cyan-400 animate-spin" />
-            <span className="text-sm text-gray-300">Refreshing...</span>
+          <div className="flex items-center space-x-2 bg-white px-3 py-2 rounded-lg border border-gray-300 shadow-lg">
+            <RefreshCw className="h-4 w-4 text-[var(--accent)] animate-spin" />
+            <span className="text-sm text-gray-700">Refreshing...</span>
           </div>
         </div>
       )}
@@ -380,8 +380,8 @@ const Review: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">{startup.name}</h3>
-                  <p className="text-gray-400 text-sm flex items-center">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">{startup.name}</h3>
+                  <p className="text-gray-600 text-sm flex items-center">
                     <User className="h-4 w-4 mr-1" />
                     {startup.founder}
                   </p>
@@ -390,17 +390,17 @@ const Review: React.FC = () => {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Sector:</span>
-                  <span className="text-sm text-white">{startup.sector}</span>
+                  <span className="text-sm text-gray-600">Sector:</span>
+                  <span className="text-sm text-gray-900">{startup.sector}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Type:</span>
+                  <span className="text-sm text-gray-600">Type:</span>
                   <span className={`text-xs px-2 py-1 rounded-full capitalize ${getTypeColor(startup.type)}`}>
                     {startup.type}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Status:</span>
+                  <span className="text-sm text-gray-600">Status:</span>
                   <div className="flex items-center space-x-1">
                     {getStatusIcon(startup.status)}
                     <span className={`text-xs px-2 py-1 rounded-full capitalize ${getStatusColor(startup.status)}`}>
@@ -409,15 +409,15 @@ const Review: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Submitted:</span>
-                  <span className="text-sm text-white flex items-center">
+                  <span className="text-sm text-gray-600">Submitted:</span>
+                  <span className="text-sm text-gray-900 flex items-center">
                     <Calendar className="h-3 w-3 mr-1" />
                     {startup.submissionDate}
                   </span>
                 </div>
               </div>
 
-              <div className="flex space-x-2 pt-4 border-t border-gray-700">
+              <div className="flex space-x-2 pt-4 border-t border-gray-300">
                 <Button 
                   size="sm" 
                   className="flex-1" 
@@ -432,7 +432,7 @@ const Review: React.FC = () => {
                       size="sm" 
                       variant="outline" 
                       onClick={() => handleApprove(startup.id)}
-                      className="text-green-400 hover:bg-green-900/20"
+                      className="text-green-600 hover:bg-green-50"
                       disabled={processingStartupId === startup.id}
                     >
                       {processingStartupId === startup.id && processingAction === 'approve' ? (
@@ -445,7 +445,7 @@ const Review: React.FC = () => {
                       size="sm" 
                       variant="outline" 
                       onClick={() => handleReject(startup.id)}
-                      className="text-red-400 hover:bg-red-900/20"
+                      className="text-red-600 hover:bg-red-50"
                       disabled={processingStartupId === startup.id}
                     >
                       {processingStartupId === startup.id && processingAction === 'reject' ? (
@@ -464,16 +464,16 @@ const Review: React.FC = () => {
 
       {isLoading && applications.length === 0 && (
         <Card className="p-12 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading applications...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading applications...</p>
         </Card>
       )}
 
       {!isLoading && filteredStartups.length === 0 && applications.length === 0 && (
         <Card className="p-12 text-center">
-          <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-300 mb-2">No applications found</h3>
-          <p className="text-gray-400">
+          <Building2 className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-700 mb-2">No applications found</h3>
+          <p className="text-gray-600">
             {startups.length === 0 
               ? "No startup applications yet. Applications will appear here when enterprise users sign up."
               : "Try adjusting your search or filter criteria"
@@ -485,10 +485,10 @@ const Review: React.FC = () => {
       {/* Success/Error Messages */}
       {showSuccessMessage && (
         <div className="fixed top-4 right-4 z-50">
-          <Card className="p-4 bg-green-900/20 border-green-500/50">
+          <Card className="p-4 bg-green-50 border-green-200">
             <div className="flex items-center space-x-3">
-              <CheckCircle className="h-5 w-5 text-green-400" />
-              <span className="text-green-300">{message}</span>
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span className="text-green-700">{message}</span>
             </div>
           </Card>
         </div>
@@ -496,10 +496,10 @@ const Review: React.FC = () => {
 
       {showErrorMessage && (
         <div className="fixed top-4 right-4 z-50">
-          <Card className="p-4 bg-red-900/20 border-red-500/50">
+          <Card className="p-4 bg-red-50 border-red-200">
             <div className="flex items-center space-x-3">
-              <AlertCircle className="h-5 w-5 text-red-400" />
-              <span className="text-red-300">{message}</span>
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <span className="text-red-600">{message}</span>
             </div>
           </Card>
         </div>

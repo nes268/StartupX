@@ -12,6 +12,8 @@ import { Profile } from '../../types';
 import { Building2 } from 'lucide-react';
 import { profileApi } from '../../services/profileApi';
 import { startupsApi } from '../../services/startupsApi';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
 
 const ProfileWizard: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -32,7 +34,6 @@ const ProfileWizard: React.FC = () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Complete profile - save to backend
       if (!user?.id) {
         setError('User not found. Please login again.');
         return;
@@ -42,16 +43,13 @@ const ProfileWizard: React.FC = () => {
       setError(null);
 
       try {
-        // Save profile to backend
         const savedProfile = await profileApi.saveProfile({
           userId: user.id,
           ...profileData
         } as Partial<Profile> & { userId: string });
 
-        // Create or update startup entry from profile data
         if (savedProfile.startupName && savedProfile.founderName && savedProfile.sector) {
           try {
-            // Check if startup already exists for this user
             const existingStartup = await startupsApi.getStartupByUserId(user.id);
             
             const startupData = {
@@ -66,20 +64,15 @@ const ProfileWizard: React.FC = () => {
             };
 
             if (existingStartup) {
-              // Update existing startup
               await startupsApi.updateStartup(existingStartup.id, startupData);
             } else {
-              // Create new startup
               await startupsApi.createStartup(startupData);
             }
           } catch (startupError: any) {
             console.error('Error creating/updating startup entry:', startupError);
-            // Don't fail the profile save if startup creation/update fails
-            // The profile is already saved successfully
           }
         }
 
-        // Clear any previous errors and show success
         setError(null);
         setIsSaving(false);
         setProfileSubmitted(true);
@@ -116,47 +109,49 @@ const ProfileWizard: React.FC = () => {
     }
   };
 
-  // Show success message after profile submission
   if (profileSubmitted) {
     return (
-      <div className="min-h-screen bg-gray-900 px-4 py-8 flex items-center justify-center">
+      <div className="min-h-screen bg-dots-pattern px-4 py-8 flex items-center justify-center">
         <div className="max-w-2xl mx-auto text-center">
-          <div className="bg-gray-800 rounded-lg border border-gray-700 shadow-lg p-8">
+          <Card className="p-8">
             <div className="flex justify-center mb-6">
-              <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center">
-                <Building2 className="h-10 w-10 text-green-400" />
+              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
+                <Building2 className="h-10 w-10 text-emerald-600" />
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-4">Profile Submitted Successfully!</h1>
-            <p className="text-gray-300 mb-6">
+            <h1 className="text-3xl font-semibold text-[var(--text)] mb-4">Profile Submitted Successfully!</h1>
+            <p className="text-[var(--text-muted)] mb-6">
               Your profile has been submitted and is now pending admin review. 
               You will be notified once your application has been reviewed.
             </p>
-            <p className="text-gray-400 text-sm mb-8">
+            <p className="text-[var(--text-subtle)] text-sm mb-8">
               Please wait for admin approval before accessing the dashboard.
             </p>
-            <button
+            <Button
               onClick={() => navigate('/login')}
-              className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-colors"
+              variant="primary"
+              size="lg"
             >
               Return to Login
-            </button>
-          </div>
+            </Button>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 px-4 py-8">
+    <div className="min-h-screen bg-dots-pattern px-4 py-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center items-center space-x-2 mb-4">
-            <Building2 className="h-8 w-8 text-cyan-400" />
-            <h1 className="text-3xl font-bold text-white">Profile Setup</h1>
+            <div className="h-10 w-10 rounded-full bg-[var(--accent-muted)] flex items-center justify-center">
+              <Building2 className="h-5 w-5 text-[var(--accent)]" />
+            </div>
+            <h1 className="text-3xl font-semibold text-[var(--text)]">Profile Setup</h1>
           </div>
-          <p className="text-gray-300">Complete your profile to access the dashboard</p>
+          <p className="text-[var(--text-muted)]">Complete your profile to access the dashboard</p>
         </div>
 
         {/* Progress Bar */}
@@ -166,22 +161,22 @@ const ProfileWizard: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-4 p-4 bg-red-900/50 border border-red-700 rounded-lg text-red-200">
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600">
             {error}
           </div>
         )}
 
         {/* Step Content */}
-        <div className="bg-gray-800 rounded-lg border border-gray-700 shadow-lg">
+        <Card>
           {renderStep()}
-        </div>
+        </Card>
 
         {/* Loading Overlay */}
         {isSaving && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-              <p className="text-white">Saving profile...</p>
-            </div>
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-start justify-center z-50 p-4" style={{ paddingTop: '120px' }}>
+            <Card className="p-6">
+              <p className="text-[var(--text)]">Saving profile...</p>
+            </Card>
           </div>
         )}
       </div>

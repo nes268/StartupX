@@ -12,18 +12,18 @@ const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-gray-300">
+        <label className="block text-sm font-medium text-[var(--text-muted)]">
           {label}
         </label>
       )}
       <input
-        className={`w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-colors ${error ? 'border-red-500' : ''} ${className}`}
+        className={`w-full px-4 py-2.5 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl text-[var(--text)] placeholder-[var(--text-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent transition-colors ${error ? 'border-red-500 focus:ring-red-500' : ''} ${className}`}
         {...props}
       />
       {error && (
-        <p className="text-sm text-red-400">{error}</p>
+        <p className="text-sm text-red-500">{error}</p>
       )}
     </div>
   );

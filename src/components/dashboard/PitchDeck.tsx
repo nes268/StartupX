@@ -164,8 +164,8 @@ const PitchDeck: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white">Pitch Deck</h1>
-          <p className="text-gray-400 mt-1">Choose a template or upload your own deck</p>
+          <h1 className="text-3xl font-extrabold text-[var(--text)]">Pitch Deck</h1>
+          <p className="text-[var(--text-muted)] mt-1">Choose a template or upload your own deck</p>
         </div>
         <Button 
           onClick={() => {
@@ -181,17 +181,17 @@ const PitchDeck: React.FC = () => {
 
       {/* Templates */}
       <div>
-        <h2 className="text-xl font-semibold text-white mb-4">Templates</h2>
+        <h2 className="text-xl font-semibold text-[var(--text)] mb-4">Templates</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {templates.map((template) => (
-            <Card key={template.id} className="p-6 hover:border-cyan-500/50 transition-colors">
+            <Card key={template.id} className="p-6 hover:border-[var(--accent)]/50 transition-colors">
               <div className="text-center">
                 <div className={`w-20 h-20 ${template.color} rounded-lg flex items-center justify-center mx-auto mb-4`}>
                   <PresentationChart className="h-10 w-10 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">{template.name}</h3>
-                <p className="text-gray-400 text-sm mb-4">{template.description}</p>
-                <div className="flex items-center justify-center text-sm text-gray-300 mb-6">
+                <h3 className="text-xl font-bold text-[var(--text)] mb-2">{template.name}</h3>
+                <p className="text-[var(--text-muted)] text-sm mb-4">{template.description}</p>
+                <div className="flex items-center justify-center text-sm text-[var(--text)] mb-6">
                   <FileText className="h-4 w-4 mr-1" />
                   <span>{template.slides} slides</span>
                 </div>
@@ -212,7 +212,8 @@ const PitchDeck: React.FC = () => {
       {/* Upload Form Modal */}
       {showUploadForm && (
         <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4"
+          style={{ paddingTop: '120px' }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowUploadForm(false);
@@ -222,7 +223,7 @@ const PitchDeck: React.FC = () => {
         >
           <Card className="p-6 max-w-md w-full">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-[var(--text)]">
                 Upload Your Pitch Deck
               </h3>
               <button 
@@ -230,7 +231,7 @@ const PitchDeck: React.FC = () => {
                   setShowUploadForm(false);
                   setSelectedTemplate(null);
                 }} 
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -242,8 +243,8 @@ const PitchDeck: React.FC = () => {
             {uploadError && (
               <div className="mb-4 p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
-                  <p className="text-red-300 text-sm">{uploadError}</p>
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <p className="text-red-600 text-sm">{uploadError}</p>
                 </div>
               </div>
             )}
@@ -252,19 +253,19 @@ const PitchDeck: React.FC = () => {
               <div
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                   dragActive 
-                    ? 'border-cyan-400 bg-cyan-900/20' 
-                    : 'border-gray-600 hover:border-gray-500'
+                    ? 'border-[var(--accent)] bg-[var(--accent-muted)]' 
+                    : 'border-[var(--border)] hover:border-[var(--accent-muted-border)]'
                 }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
               >
-                <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-300 mb-2 font-medium">
+                <Upload className="h-10 w-10 text-[var(--text-muted)] mx-auto mb-3" />
+                <p className="text-[var(--text)] mb-2 font-medium">
                   {dragActive ? 'Drop your file here' : 'Drag and drop your file here'}
                 </p>
-                <p className="text-sm text-gray-400 mb-4">or</p>
+                <p className="text-sm text-[var(--text-muted)] mb-4">or</p>
                 <div className="inline-block">
                   <input 
                     ref={fileInputRef}
@@ -295,7 +296,7 @@ const PitchDeck: React.FC = () => {
                   </Button>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-[var(--text-muted)] text-center">
                 Supported formats: PDF, PPTX, PPT (Max 50MB)
               </p>
               <Button 

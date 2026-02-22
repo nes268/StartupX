@@ -178,12 +178,12 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
   return (
     <div className="p-8">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 bg-cyan-500/10 rounded-lg">
-          <BarChart3 className="h-6 w-6 text-cyan-400" />
+        <div className="p-2 bg-[var(--accent-muted)] rounded-lg">
+          <BarChart3 className="h-6 w-6 text-[var(--accent)]" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Pitch Deck & Traction</h2>
-          <p className="text-gray-400">Upload your business documents and traction data</p>
+          <h2 className="text-2xl font-bold text-[var(--text)]">Pitch Deck & Traction</h2>
+          <p className="text-[var(--text-muted)]">Upload your business documents and traction data</p>
         </div>
       </div>
 
@@ -191,7 +191,7 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
         {/* Business Documents */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Business Documents / Pitch Deck</h3>
+            <h3 className="text-lg font-semibold text-[var(--text)]">Business Documents / Pitch Deck</h3>
             <Button
               type="button"
               variant="ghost"
@@ -226,9 +226,9 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
           {formData.businessDocuments && formData.businessDocuments.length > 0 ? (
             <div className="space-y-2">
               {formData.businessDocuments.map((doc, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 text-gray-300">
-                    <Check className="h-4 w-4 text-green-400" />
+                <div key={index} className="flex items-center justify-between bg-[var(--bg-muted)] p-3 rounded-lg border border-[var(--border)]">
+                  <div className="flex items-center space-x-2 text-[var(--text)]">
+                    <Check className="h-4 w-4 text-[var(--accent)]" />
                     <span>{documentNames.business[index] || (doc.includes('/') ? doc.split('/').pop() : doc)}</span>
                   </div>
                   <Button
@@ -244,9 +244,9 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
               ))}
             </div>
           ) : (
-            <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
-              <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400">No business documents uploaded yet</p>
+            <div className="border-2 border-dashed border-[var(--border)] rounded-lg p-8 text-center bg-[var(--bg-subtle)]">
+              <Upload className="h-12 w-12 text-[var(--text-muted)] mx-auto mb-4" />
+              <p className="text-[var(--text-muted)]">No business documents uploaded yet</p>
               <Button
                 type="button"
                 variant="outline"
@@ -267,14 +267,14 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
             </div>
           )}
           {errors.business && (
-            <p className="text-sm text-red-400 mt-2">{errors.business}</p>
+            <p className="text-sm text-red-600 mt-2">{errors.business}</p>
           )}
         </div>
 
         {/* Traction Details */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Traction Details</h3>
+            <h3 className="text-lg font-semibold text-[var(--text)]">Traction Details</h3>
             <Button
               type="button"
               variant="ghost"
@@ -309,9 +309,9 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
           {formData.tractionDetails && formData.tractionDetails.length > 0 ? (
             <div className="space-y-2">
               {formData.tractionDetails.map((doc, index) => (
-                <div key={index} className="flex items-center justify-between bg-gray-700/50 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 text-gray-300">
-                    <Check className="h-4 w-4 text-green-400" />
+                <div key={index} className="flex items-center justify-between bg-[var(--bg-muted)] p-3 rounded-lg border border-[var(--border)]">
+                  <div className="flex items-center space-x-2 text-[var(--text)]">
+                    <Check className="h-4 w-4 text-[var(--accent)]" />
                     <span>{documentNames.traction[index] || (doc.includes('/') ? doc.split('/').pop() : doc)}</span>
                   </div>
                   <Button
@@ -327,9 +327,9 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
               ))}
             </div>
           ) : (
-            <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
-              <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-400">No traction documents uploaded yet</p>
+            <div className="border-2 border-dashed border-[var(--border)] rounded-lg p-8 text-center bg-[var(--bg-subtle)]">
+              <Upload className="h-12 w-12 text-[var(--text-muted)] mx-auto mb-4" />
+              <p className="text-[var(--text-muted)]">No traction documents uploaded yet</p>
               <Button
                 type="button"
                 variant="outline"
@@ -350,14 +350,14 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
             </div>
           )}
           {errors.traction && (
-            <p className="text-sm text-red-400 mt-2">{errors.traction}</p>
+            <p className="text-sm text-red-600 mt-2">{errors.traction}</p>
           )}
         </div>
 
         {/* Balance Sheet */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-white">Balance Sheet</h3>
-          <div className="border border-gray-700 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-[var(--text)]">Balance Sheet</h3>
+          <div className="border border-[var(--border)] rounded-lg p-4 bg-[var(--bg-subtle)]">
             <input
               type="file"
               ref={balanceInputRef}
@@ -368,8 +368,8 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
             />
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-300">Upload your latest balance sheet</p>
-                <p className="text-sm text-gray-400">Financial statements for the current year</p>
+                <p className="text-[var(--text)]">Upload your latest balance sheet</p>
+                <p className="text-sm text-[var(--text-muted)]">Financial statements for the current year</p>
               </div>
               <div className="flex items-center space-x-3">
                 <Button
@@ -393,7 +393,7 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
                   )}
                 </Button>
                 {formData.balanceSheet && !uploading.balance && (
-                  <div className="flex items-center text-green-400 text-sm">
+                  <div className="flex items-center text-[var(--accent)] text-sm">
                     <Check className="h-4 w-4 mr-1" />
                     <span>{documentNames.balance || (formData.balanceSheet.includes('/') ? formData.balanceSheet.split('/').pop() : formData.balanceSheet)}</span>
                   </div>
@@ -401,7 +401,7 @@ const PitchDeckTraction: React.FC<PitchDeckTractionProps> = ({ data, updateData,
               </div>
             </div>
             {errors.balance && (
-              <p className="text-sm text-red-400 mt-2">{errors.balance}</p>
+              <p className="text-sm text-red-600 mt-2">{errors.balance}</p>
             )}
           </div>
         </div>

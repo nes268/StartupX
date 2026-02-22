@@ -65,24 +65,24 @@ const FundingInfo: React.FC<FundingInfoProps> = ({ data, updateData, onNext, onP
   return (
     <div className="p-8">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 bg-cyan-500/10 rounded-lg">
-          <DollarSign className="h-6 w-6 text-cyan-400" />
+        <div className="p-2 bg-[var(--accent-muted)] rounded-lg">
+          <DollarSign className="h-6 w-6 text-[var(--accent)]" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Funding Information</h2>
-          <p className="text-gray-400">Tell us about your funding status and requirements</p>
+          <h2 className="text-2xl font-bold text-[var(--text)]">Funding Information</h2>
+          <p className="text-[var(--text-muted)]">Tell us about your funding status and requirements</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Funding Stage */}
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-300">Current Funding Stage</label>
+          <label className="block text-sm font-medium text-[var(--text-muted)]">Current Funding Stage</label>
           <select
             name="fundingStage"
             value={formData.fundingStage}
             onChange={handleChange}
-            className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
             <option value="">Select funding stage</option>
             {fundingStages.map((stage) => (
@@ -91,12 +91,12 @@ const FundingInfo: React.FC<FundingInfoProps> = ({ data, updateData, onNext, onP
               </option>
             ))}
           </select>
-          {errors.fundingStage && <p className="text-sm text-red-400">{errors.fundingStage}</p>}
+          {errors.fundingStage && <p className="text-sm text-red-600">{errors.fundingStage}</p>}
         </div>
 
         {/* Already Funded */}
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-300">
+          <label className="block text-sm font-medium text-[var(--text-muted)]">
             Have you been funded already?
           </label>
           <div className="flex space-x-4">
@@ -107,9 +107,9 @@ const FundingInfo: React.FC<FundingInfoProps> = ({ data, updateData, onNext, onP
                 value="true"
                 checked={formData.alreadyFunded === true}
                 onChange={() => setFormData({ ...formData, alreadyFunded: true })}
-                className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                className="mr-2 text-[var(--accent)] focus:ring-[var(--accent)]"
               />
-              <span className="text-gray-300">Yes</span>
+              <span className="text-[var(--text)]">Yes</span>
             </label>
             <label className="flex items-center">
               <input
@@ -118,17 +118,17 @@ const FundingInfo: React.FC<FundingInfoProps> = ({ data, updateData, onNext, onP
                 value="false"
                 checked={formData.alreadyFunded === false}
                 onChange={() => setFormData({ ...formData, alreadyFunded: false })}
-                className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                className="mr-2 text-[var(--accent)] focus:ring-[var(--accent)]"
               />
-              <span className="text-gray-300">No</span>
+              <span className="text-[var(--text)]">No</span>
             </label>
           </div>
         </div>
 
         {/* Funding Details (if already funded) */}
         {formData.alreadyFunded && (
-          <div className="space-y-6 p-6 bg-gray-700/30 rounded-lg border border-gray-600">
-            <h3 className="text-lg font-medium text-white">Funding Details</h3>
+          <div className="space-y-6 p-6 bg-[var(--bg-muted)] rounded-lg border border-[var(--border)]">
+            <h3 className="text-lg font-medium text-[var(--text)]">Funding Details</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input

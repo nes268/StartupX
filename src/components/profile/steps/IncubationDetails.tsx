@@ -68,19 +68,19 @@ const IncubationDetails: React.FC<IncubationDetailsProps> = ({ data, updateData,
   return (
     <div className="p-8">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 bg-cyan-500/10 rounded-lg">
-          <Lightbulb className="h-6 w-6 text-cyan-400" />
+        <div className="p-2 bg-[var(--accent-muted)] rounded-lg">
+          <Lightbulb className="h-6 w-6 text-[var(--accent)]" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Incubation Details</h2>
-          <p className="text-gray-400">Tell us about your incubation experience</p>
+          <h2 className="text-2xl font-bold text-[var(--text)]">Incubation Details</h2>
+          <p className="text-[var(--text-muted)]">Tell us about your incubation experience</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Previously Incubated */}
         <div className="space-y-3">
-          <label className="block text-sm font-medium text-gray-300">
+          <label className="block text-sm font-medium text-[var(--text-muted)]">
             Have you been incubated previously?
           </label>
           <div className="flex space-x-4">
@@ -91,9 +91,9 @@ const IncubationDetails: React.FC<IncubationDetailsProps> = ({ data, updateData,
                 value="true"
                 checked={formData.previouslyIncubated === true}
                 onChange={() => setFormData({ ...formData, previouslyIncubated: true })}
-                className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                className="mr-2 text-[var(--accent)] focus:ring-[var(--accent)]"
               />
-              <span className="text-gray-300">Yes</span>
+              <span className="text-[var(--text)]">Yes</span>
             </label>
             <label className="flex items-center">
               <input
@@ -102,9 +102,9 @@ const IncubationDetails: React.FC<IncubationDetailsProps> = ({ data, updateData,
                 value="false"
                 checked={formData.previouslyIncubated === false}
                 onChange={() => setFormData({ ...formData, previouslyIncubated: false })}
-                className="mr-2 text-cyan-500 focus:ring-cyan-500"
+                className="mr-2 text-[var(--accent)] focus:ring-[var(--accent)]"
               />
-              <span className="text-gray-300">No</span>
+              <span className="text-[var(--text)]">No</span>
             </label>
           </div>
         </div>
@@ -152,12 +152,12 @@ const IncubationDetails: React.FC<IncubationDetailsProps> = ({ data, updateData,
 
             {/* Mode of Incubation */}
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300">Mode of Incubation</label>
+              <label className="block text-sm font-medium text-[var(--text-muted)]">Mode of Incubation</label>
               <select
                 name="incubationMode"
                 value={formData.incubationMode}
                 onChange={handleChange}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
                 <option value="online">Online</option>
                 <option value="offline">Offline</option>
@@ -168,7 +168,7 @@ const IncubationDetails: React.FC<IncubationDetailsProps> = ({ data, updateData,
             {/* Supports Received */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-300">Supports/Benefits Received</label>
+                <label className="block text-sm font-medium text-[var(--text-muted)]">Supports/Benefits Received</label>
                 <Button
                   type="button"
                   variant="ghost"

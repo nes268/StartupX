@@ -48,12 +48,12 @@ const PersonalInfo: React.FC<PersonalInfoProps> = ({ data, updateData, onNext })
   return (
     <div className="p-8">
       <div className="flex items-center space-x-3 mb-6">
-        <div className="p-2 bg-cyan-500/10 rounded-lg">
-          <User className="h-6 w-6 text-cyan-400" />
+        <div className="p-2 bg-[var(--accent-muted)] rounded-lg">
+          <User className="h-6 w-6 text-[var(--accent)]" />
         </div>
         <div>
-          <h2 className="text-2xl font-bold text-white">Personal Information</h2>
-          <p className="text-gray-400">Tell us about yourself</p>
+          <h2 className="text-2xl font-bold text-[var(--text)]">Personal Information</h2>
+          <p className="text-[var(--text-muted)]">Tell us about yourself</p>
         </div>
       </div>
 

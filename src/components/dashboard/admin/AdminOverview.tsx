@@ -83,7 +83,7 @@ const AdminOverview: React.FC = () => {
         title: 'Innovation Startups', 
         value: innovation.toString(), 
         icon: Users, 
-        color: 'text-cyan-400',
+        color: 'text-[var(--accent-soft)]',
         type: 'innovation'
       },
       { 
@@ -120,7 +120,7 @@ const AdminOverview: React.FC = () => {
     // Vibrant color palette for charts
     const colors = [
       { hex: '#8b5cf6', name: 'violet' }, // Violet-500
-      { hex: '#06b6d4', name: 'cyan' }, // Cyan-500
+      { hex: '#4F46E5', name: 'accent' }, // Accent color
       { hex: '#10b981', name: 'emerald' }, // Emerald-500
       { hex: '#f59e0b', name: 'amber' }, // Amber-500
       { hex: '#ec4899', name: 'pink' }, // Pink-500
@@ -238,8 +238,8 @@ const AdminOverview: React.FC = () => {
     const normalizedStatus = status === 'dropout' ? 'dropout' : 'active';
     
     const statusConfig = {
-      active: { bg: 'bg-green-900/30', text: 'text-green-400', label: 'Active' },
-      dropout: { bg: 'bg-red-900/30', text: 'text-red-400', label: 'Dropout' }
+      active: { bg: 'bg-green-100', text: 'text-green-700', label: 'Active' },
+      dropout: { bg: 'bg-red-100', text: 'text-red-700', label: 'Dropout' }
     };
     const config = statusConfig[normalizedStatus] || statusConfig.active;
     return (
@@ -253,8 +253,8 @@ const AdminOverview: React.FC = () => {
     return (
       <span className={`px-2 py-1 rounded-full text-xs ${
         type === 'incubation' 
-          ? 'bg-green-900/30 text-green-400' 
-          : 'bg-blue-900/30 text-blue-400'
+          ? 'bg-green-100 text-green-700' 
+          : 'bg-blue-100 text-blue-700'
       }`}>
         {type === 'incubation' ? 'Incubation' : 'Innovation'}
       </span>
@@ -293,13 +293,13 @@ const AdminOverview: React.FC = () => {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-          <p className="text-gray-400">Overview of platform metrics and recent activity</p>
+          <h1 className="text-3xl font-bold text-[var(--text)] mb-2">Admin Dashboard</h1>
+          <p className="text-[var(--text-muted)]">Overview of platform metrics and recent activity</p>
         </div>
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
-            <Loader2 className="h-6 w-6 animate-spin text-cyan-400" />
-            <span className="text-gray-400">Loading dashboard data...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+            <span className="text-[var(--text-muted)]">Loading dashboard data...</span>
           </div>
         </div>
       </div>
@@ -310,20 +310,20 @@ const AdminOverview: React.FC = () => {
     return (
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-          <p className="text-gray-400">Overview of platform metrics and recent activity</p>
+          <h1 className="text-3xl font-bold text-[var(--text)] mb-2">Admin Dashboard</h1>
+          <p className="text-[var(--text-muted)]">Overview of platform metrics and recent activity</p>
         </div>
-        <Card className="p-6 bg-red-900/20 border-red-500/50">
+        <Card className="p-6 bg-red-50 border-red-200">
           <div className="flex items-center space-x-3">
-            <AlertTriangle className="h-5 w-5 text-red-400" />
+            <AlertTriangle className="h-5 w-5 text-red-600" />
             <div>
-              <h3 className="text-red-400 font-medium">Error</h3>
-              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <h3 className="text-red-700 font-medium">Error</h3>
+              <p className="text-red-600 text-sm mt-1">{error}</p>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={refreshStartups}
-                className="mt-2 text-red-400 hover:text-red-300"
+                className="mt-2 text-red-600 hover:text-red-700"
               >
                 Try Again
               </Button>
@@ -338,8 +338,8 @@ const AdminOverview: React.FC = () => {
     <div className="space-y-8">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-        <p className="text-gray-400">Overview of platform metrics and recent activity</p>
+        <h1 className="text-3xl font-bold text-[var(--text)] mb-2">Admin Dashboard</h1>
+        <p className="text-[var(--text-muted)]">Overview of platform metrics and recent activity</p>
       </div>
 
       {/* Metrics Cards */}
@@ -353,10 +353,10 @@ const AdminOverview: React.FC = () => {
             <Card hover className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400 mb-1">{metric.title}</p>
-                  <p className="text-3xl font-bold text-white">{metric.value}</p>
+                  <p className="text-sm text-[var(--text-muted)] mb-1">{metric.title}</p>
+                  <p className="text-3xl font-bold text-[var(--text)]">{metric.value}</p>
                 </div>
-                <div className={`p-3 bg-gray-700 rounded-lg ${metric.color}`}>
+                <div className={`p-3 bg-[var(--bg-muted)] rounded-xl ${metric.color}`}>
                   <metric.icon className="h-6 w-6" />
                 </div>
               </div>
@@ -369,7 +369,7 @@ const AdminOverview: React.FC = () => {
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Sector Distribution Pie Chart */}
         <Card className="p-6 h-full flex flex-col">
-          <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
+          <h2 className="text-xl font-semibold text-[var(--text)] mb-6 flex items-center">
             <PieChart className="h-5 w-5 mr-2" />
             Sector Distribution
           </h2>
@@ -379,8 +379,8 @@ const AdminOverview: React.FC = () => {
             {totalStartups === 0 ? (
               <div className="text-center py-12">
                 <PieChart className="h-16 w-16 text-gray-400 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-gray-300 mb-2">No startups</h3>
-                <p className="text-gray-400">Startup data will appear here</p>
+                <h3 className="text-lg font-medium text-[var(--text-muted)] mb-2">No startups</h3>
+                <p className="text-[var(--text-muted)]">Startup data will appear here</p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center w-full">
@@ -481,17 +481,17 @@ const AdminOverview: React.FC = () => {
                   {/* Tooltip */}
                   {hoveredSector && (
                     <div
-                      className="absolute pointer-events-none z-10 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 shadow-2xl min-w-[140px]"
+                      className="absolute pointer-events-none z-10 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-xl min-w-[140px]"
                       style={{
                         left: `${Math.min(tooltipPosition.x + 15, 240)}px`,
                         top: `${Math.max(tooltipPosition.y - 50, 10)}px`,
                         transform: 'translateY(-100%)'
                       }}
                     >
-                      <div className="text-sm font-semibold text-white mb-1">
+                      <div className="text-sm font-semibold text-[var(--text)] mb-1">
                         {hoveredSector.sector}
                       </div>
-                      <div className="text-xs text-gray-300">
+                      <div className="text-xs text-[var(--text-muted)]">
                         {hoveredSector.count} startup{hoveredSector.count !== 1 ? 's' : ''} ({hoveredSector.percentage.toFixed(1)}%)
                       </div>
                     </div>
@@ -505,7 +505,7 @@ const AdminOverview: React.FC = () => {
         {/* Recent Notifications - Right */}
         <Card className="p-6 flex flex-col" style={{ maxHeight: '500px' }}>
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
-            <h2 className="text-xl font-semibold text-white flex items-center">
+            <h2 className="text-xl font-semibold text-[var(--text)] flex items-center">
               <Bell className="h-5 w-5 mr-2" />
               Recent Notifications
               {unreadCount > 0 && (
@@ -517,7 +517,7 @@ const AdminOverview: React.FC = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => refreshNotifications()}
-                className="text-xs text-gray-400 hover:text-cyan-400 transition-colors"
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
                 title="Refresh notifications"
               >
                 Refresh
@@ -525,7 +525,7 @@ const AdminOverview: React.FC = () => {
               {unreadCount > 0 && (
                 <button
                   onClick={() => notifications.forEach(n => !n.read && markAsRead(n.id))}
-                  className="text-xs text-cyan-400 hover:text-cyan-300"
+                  className="text-xs text-[var(--accent)] hover:text-[var(--accent-hover)]"
                 >
                   Mark all as read
                 </button>
@@ -536,32 +536,32 @@ const AdminOverview: React.FC = () => {
             {notifications.length === 0 ? (
               <div className="text-center py-8">
                 <Bell className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <h3 className="text-lg font-medium text-gray-300 mb-2">No notifications</h3>
-                <p className="text-gray-400">Notifications will appear here when users sign up or other events occur</p>
+                <h3 className="text-lg font-medium text-[var(--text-muted)] mb-2">No notifications</h3>
+                <p className="text-[var(--text-muted)]">Notifications will appear here when users sign up or other events occur</p>
               </div>
             ) : (
               notifications.map((notification) => (
                 <div 
                   key={notification.id} 
                   className={`flex items-start space-x-2 p-2.5 rounded-lg transition-colors cursor-pointer ${
-                    notification.read ? 'bg-gray-700/30' : 'bg-gray-700/50 border border-gray-600'
+                    notification.read ? 'bg-[var(--bg-muted)]' : 'bg-[var(--accent-muted)]/60 border border-[var(--accent-muted-border)]'
                   }`}
                   onClick={() => !notification.read && markAsRead(notification.id)}
                 >
                   <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                    notification.type === 'signup' ? 'bg-emerald-400' :
-                    notification.type === 'application' ? 'bg-blue-400' :
-                    notification.type === 'review' ? 'bg-yellow-400' :
-                    notification.type === 'feedback' ? 'bg-purple-400' :
-                    notification.type === 'milestone' ? 'bg-cyan-400' :
-                    notification.type === 'info' ? 'bg-gray-400' :
-                    'bg-gray-400'
+                    notification.type === 'signup' ? 'bg-emerald-500' :
+                    notification.type === 'application' ? 'bg-blue-500' :
+                    notification.type === 'review' ? 'bg-yellow-500' :
+                    notification.type === 'feedback' ? 'bg-purple-500' :
+                    notification.type === 'milestone' ? 'bg-[var(--accent)]' :
+                    notification.type === 'info' ? 'bg-gray-500' :
+                    'bg-gray-500'
                   }`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm flex-1 ${notification.read ? 'text-gray-300' : 'text-white font-medium'}`}>
+                      <p className={`text-sm flex-1 ${notification.read ? 'text-[var(--text-muted)]' : 'text-[var(--text)] font-medium'}`}>
                         {notification.type === 'signup' && !notification.read && (
-                          <span className="inline-block mr-2 px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 text-xs rounded">
+                          <span className="inline-block mr-2 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded">
                             New Applicant
                           </span>
                         )}
@@ -570,7 +570,7 @@ const AdminOverview: React.FC = () => {
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
                     {notification.userName && notification.userEmail && (
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-[var(--text-muted)] mt-1">
                         {notification.userName} • {notification.userEmail}
                       </p>
                     )}
@@ -580,7 +580,7 @@ const AdminOverview: React.FC = () => {
                       e.stopPropagation();
                       await deleteNotification(notification.id);
                     }}
-                    className="text-gray-400 hover:text-red-400 transition-colors p-1 flex-shrink-0"
+                    className="text-gray-500 hover:text-red-600 transition-colors p-1 flex-shrink-0"
                     title="Delete notification"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -594,11 +594,11 @@ const AdminOverview: React.FC = () => {
 
       {/* Startups Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-6xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/30 flex items-start justify-center z-50 p-4" style={{ paddingTop: '120px' }}>
+          <Card className="w-full max-w-6xl max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">{getModalTitle()}</h2>
+                <h2 className="text-2xl font-bold text-[var(--text)]">{getModalTitle()}</h2>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -611,9 +611,9 @@ const AdminOverview: React.FC = () => {
               {/* Filters */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Search</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Search</label>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
                     <Input
                       type="text"
                       placeholder="Search startups..."
@@ -624,11 +624,11 @@ const AdminOverview: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Sector</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Sector</label>
                   <select
                     value={selectedSector}
                     onChange={(e) => setSelectedSector(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   >
                     <option value="all">All Sectors</option>
                     {sectors.map(sector => (
@@ -637,11 +637,11 @@ const AdminOverview: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Stage</label>
+                  <label className="block text-sm font-medium text-[var(--text-muted)] mb-2">Stage</label>
                   <select
                     value={selectedStage}
                     onChange={(e) => setSelectedStage(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    className="w-full px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                   >
                     <option value="all">All Stages</option>
                     {stages.map(stage => (
@@ -653,7 +653,7 @@ const AdminOverview: React.FC = () => {
 
               {/* Results Count */}
               <div className="mb-4">
-                <p className="text-gray-400">
+                <p className="text-[var(--text-muted)]">
                   Showing {getFilteredStartups().length} of {startups.length} startup{startups.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -662,34 +662,34 @@ const AdminOverview: React.FC = () => {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-700">
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Startup Name</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Founder</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Sector</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Type</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Status</th>
-                      <th className="text-left py-3 px-4 text-gray-300 font-medium">Submitted</th>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Startup Name</th>
+                      <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Founder</th>
+                      <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Sector</th>
+                      <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Type</th>
+                      <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Status</th>
+                      <th className="text-left py-3 px-4 text-[var(--text-muted)] font-medium">Submitted</th>
                     </tr>
                   </thead>
                   <tbody>
                     {getFilteredStartups().map((startup) => (
-                      <tr key={startup.id} className="border-b border-gray-800 hover:bg-gray-700/20">
+                      <tr key={startup.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-4 px-4">
                           <div className="flex items-center space-x-3">
-                            <div className="h-10 w-10 bg-cyan-500 rounded-lg flex items-center justify-center">
+                            <div className="h-10 w-10 bg-[var(--accent)] rounded-lg flex items-center justify-center">
                               <Building2 className="h-5 w-5 text-white" />
                             </div>
                             <div>
-                              <span className="text-white font-medium">{startup.name}</span>
-                              <div className="text-xs text-gray-400">{startup.email}</div>
+                              <span className="text-[var(--text)] font-medium">{startup.name}</span>
+                              <div className="text-xs text-[var(--text-muted)]">{startup.email}</div>
                             </div>
                           </div>
                         </td>
                         <td className="py-4 px-4">
-                          <span className="text-gray-300">{startup.founder}</span>
+                          <span className="text-gray-700">{startup.founder}</span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className="text-gray-300">{startup.sector}</span>
+                          <span className="text-gray-700">{startup.sector}</span>
                         </td>
                         <td className="py-4 px-4">
                           {getTypeBadge(startup.type)}
@@ -697,7 +697,7 @@ const AdminOverview: React.FC = () => {
                         <td className="py-4 px-4">
                           {getStatusBadge(startup.status)}
                         </td>
-                        <td className="py-4 px-4 text-gray-300">
+                        <td className="py-4 px-4 text-gray-700">
                           {new Date(startup.submissionDate).toLocaleDateString()}
                         </td>
                       </tr>
@@ -708,8 +708,8 @@ const AdminOverview: React.FC = () => {
                 {getFilteredStartups().length === 0 && (
                   <div className="text-center py-12">
                     <Building2 className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-300 mb-2">No startups found</h3>
-                    <p className="text-gray-400">Try adjusting your search or filter criteria</p>
+                    <h3 className="text-lg font-medium text-[var(--text-muted)] mb-2">No startups found</h3>
+                    <p className="text-[var(--text-muted)]">Try adjusting your search or filter criteria</p>
                   </div>
                 )}
               </div>
