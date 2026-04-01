@@ -33,7 +33,7 @@ const initialAlerts: Alert[] = [
   {
     id: '1',
     title: 'Application Approved',
-    description: 'Your application for StartupX Incubation Program has been approved by Admin. Welcome to the program!',
+    description: 'Your application for CITBIF Incubation Program has been approved by Admin. Welcome to the program!',
     date: '2025-01-15',
     type: 'milestone',
     priority: 'high',

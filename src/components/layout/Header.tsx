@@ -33,7 +33,7 @@ const LogoDot: React.FC<{
   );
 };
 
-const StartupXLogo: React.FC = () => {
+const CITBIFLogo: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const mouseX = useMotionValue(0);
@@ -77,7 +77,7 @@ const StartupXLogo: React.FC = () => {
         animate={{ scale: isHovered ? 1.02 : 1 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       >
-        StartupX
+        CITBIF
       </motion.span>
     </div>
   );
@@ -125,7 +125,7 @@ const Header: React.FC = () => {
     <header className="h-[72px] min-h-[72px] bg-[linear-gradient(120deg,rgba(255,255,255,0.96)_0%,rgba(238,242,255,0.95)_45%,rgba(239,246,255,0.95)_100%)] backdrop-blur-xl border border-[var(--accent-muted-border)]/70 flex items-center justify-between px-6 lg:px-8 sticky top-4 z-10 mx-4 lg:mx-6 rounded-2xl shadow-[0_10px_34px_-14px_rgba(79,70,229,0.28),0_6px_20px_-10px_rgba(59,130,246,0.2)] before:content-[''] before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-[rgba(99,102,241,0.45)] before:to-transparent before:pointer-events-none before:rounded-full relative overflow-hidden">
       {/* Logo with mouse-following dots */}
       <div className="flex items-center">
-        <StartupXLogo />
+        <CITBIFLogo />
       </div>
 
       {/* Navigation */}

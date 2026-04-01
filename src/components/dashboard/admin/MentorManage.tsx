@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Plus, Edit, Trash2, Search, User, Mail, Star, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, User, Mail, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import { Mentor, CreateMentorData, UpdateMentorData } from '../../../types';
 import { useMentors } from '../../../hooks/useMentors';
 
@@ -52,6 +52,16 @@ const MentorManage: React.FC = () => {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const renderProfileAvatar = (picture: string | undefined, name: string) => {
+    const pic = picture?.trim() ?? '';
+    const isRemoteOrData =
+      /^https?:\/\//i.test(pic) || pic.startsWith('data:') || pic.startsWith('blob:');
+    if (isRemoteOrData) {
+      return <img src={pic} alt="" className="h-full w-full object-cover" />;
+    }
+    return <span>{pic || getInitials(name)}</span>;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -318,8 +328,8 @@ const MentorManage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="h-12 w-12 bg-[var(--accent)] rounded-full flex items-center justify-center text-gray-900 font-bold text-sm">
-                    {mentor.profilePicture || getInitials(mentor.name)}
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-sm font-bold text-gray-900">
+                    {renderProfileAvatar(mentor.profilePicture, mentor.name)}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{mentor.name}</h3>

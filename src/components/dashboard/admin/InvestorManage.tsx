@@ -56,6 +56,16 @@ const InvestorManage: React.FC = () => {
       .slice(0, 2);
   };
 
+  const renderProfileAvatar = (picture: string | undefined, name: string) => {
+    const pic = picture?.trim() ?? '';
+    const isRemoteOrData =
+      /^https?:\/\//i.test(pic) || pic.startsWith('data:') || pic.startsWith('blob:');
+    if (isRemoteOrData) {
+      return <img src={pic} alt="" className="h-full w-full object-cover" />;
+    }
+    return <span>{pic || getInitials(name)}</span>;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
@@ -385,8 +395,8 @@ const InvestorManage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="h-12 w-12 bg-[var(--accent)] rounded-full flex items-center justify-center text-gray-900 font-bold text-sm">
-                    {investor.profilePicture || getInitials(investor.name)}
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-sm font-bold text-gray-900">
+                    {renderProfileAvatar(investor.profilePicture, investor.name)}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{investor.name}</h3>

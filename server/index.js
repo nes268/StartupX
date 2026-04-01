@@ -710,7 +710,7 @@ app.post('/api/mentors/request-session', async (req, res) => {
         <p>Please review this request and respond to ${requesterEmail || 'the requester'} at your earliest convenience.</p>
         
         <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
-          This is an automated message from the StartupX Dashboard.
+          This is an automated message from the CITBIF Dashboard.
         </p>
       </div>
     `;
@@ -732,7 +732,7 @@ ${additionalNotes ? `- Additional Notes:\n${additionalNotes}` : ''}
 
 Please review this request and respond to ${requesterEmail || 'the requester'} at your earliest convenience.
 
-This is an automated message from the StartupX Dashboard.
+This is an automated message from the CITBIF Dashboard.
     `;
 
     // Send email
@@ -1115,7 +1115,7 @@ app.post('/api/investors/request-intro', async (req, res) => {
         <p>Please review this request and respond to ${requesterEmail} at your earliest convenience.</p>
         
         <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
-          This is an automated message from the StartupX Dashboard.
+          This is an automated message from the CITBIF Dashboard.
         </p>
       </div>
     `;
@@ -1134,7 +1134,7 @@ ${message ? `Message: ${message}` : ''}
 
 Please review this request and respond to ${requesterEmail} at your earliest convenience.
 
-This is an automated message from the StartupX Dashboard.
+This is an automated message from the CITBIF Dashboard.
     `;
 
     // Send email

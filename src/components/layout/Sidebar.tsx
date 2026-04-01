@@ -54,7 +54,7 @@ const Sidebar: React.FC = () => {
       {/* Logo */}
       <div className="p-6 border-b border-[var(--border-muted)] flex-shrink-0">
         <div className="flex items-center">
-          <span className="text-xl font-semibold text-[var(--text)]">StartupX</span>
+          <span className="text-xl font-semibold text-[var(--text)]">CITBIF</span>
         </div>
       </div>
 
