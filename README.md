@@ -1,116 +1,201 @@
 # CITBIF
 
-Web app for a startup incubation program. Founders sign up, complete a **profile wizard**, and use a **dashboard** once an admin **approves** their application. Admins **review** startups, manage **mentors**, **investors**, and **events**, and browse **documents**. Everything persists in **MongoDB**; the UI is **React + TypeScript** (Vite) and talks to an **Express** API in `server/`.
+Full-stack platform for an incubation program: founders submit applications and run their startup workspace; administrators review applicants, manage the portfolio, and operate shared services (mentors, investors, events, documents).
 
-**Flow in short:** Home (`/`) shows a short splash, then **Login**. Saving profile data can update the linked **Startup** record for admin views; founders change **stage** (idea → scale) in **Settings**.
-
----
-
-## What you can do
-
-**As a founder** — Wizard (personal, company, incubation, files, pitch, funding), then overview, data room, mentors (incl. session requests), investors (intro requests), calendar, pitch deck, fundraising, settings. Pending or rejected applications see a gate screen instead of the full dashboard.
-
-**As an admin** — Dashboard, **Review** (list + detail + approve/reject), startup management, data room, mentor/investor/event management, notifications. List data can refresh on a timer and when you return to the tab.
-
-**Cross-cutting** — File uploads go to `server/uploads` (Multer); metadata in MongoDB. **Mentor session** emails use Nodemailer when SMTP env vars are set; otherwise the API may log the intent and still respond without sending mail.
+**How data stays aligned:** Saving a profile updates the linked **Startup** record where it matters for admin lists (name, founder, email, sector, program type). Founders set **current stage** (idea → scale) in **Settings**; that value is stored on **Startup** and appears in admin review and startup detail views. Admin screens refresh periodically and when you return to the tab so you see recent founder changes without reloading the app.
 
 ---
 
-## Stack
+## Features
 
-- **Frontend:** React 18, TypeScript, Vite, React Router, Tailwind, Framer Motion, Lucide; API via `fetch` in `src/services/`.
-- **Backend:** Node, Express, Mongoose, bcryptjs, Multer, dotenv, cors, Nodemailer.
-- **Auth:** Login/signup against `/api/auth/*`; the client keeps the user in **localStorage** (`AuthContext`). Treat as dev-friendly; harden for production as you deploy.
+### Founders (dashboard)
+
+- **Profile wizard** — Multi-step onboarding (personal, company, incubation history, documents, pitch/traction, funding).
+- **Overview & workspace** — Status, stage, and program context.
+- **Data room** — Upload and organize documents.
+- **Mentors** — Directory and session requests.
+- **Investors** — Directory and intro requests.
+- **Pitch deck & fundraising** — Deck tooling and funding progress (UI state).
+- **Calendar** — Events.
+- **Settings** — Personal details, startup stage, dropout/active status where applicable.
+
+**Access rules:** Users need a linked startup from onboarding. Pending or rejected applications see a holding state until approved (then full dashboard).
+
+### Administrators
+
+- **Dashboard** — Metrics and startup overview; data refreshes on a timer and when the browser tab becomes visible.
+- **Review** — Application list and per-startup detail (summary, full profile tabs, startup stage, approve/reject).
+- **Startup management** — Approved portfolio; modal with startup basics (including **current stage**) and full profile.
+- **Data room (admin)** — Browse startups and their files.
+- **Mentors / investors / events** — CRUD-style management and directory maintenance.
+- **Notifications** — Separate feeds for admins and founders (e.g. approvals, intros, rejections).
+
+---
+
+## Tech stack
+
+| Layer | Technologies |
+|--------|----------------|
+| Frontend | React 18, TypeScript, Vite, React Router, Tailwind CSS, Lucide icons |
+| Backend | Node.js, Express, MongoDB, Mongoose |
+| Uploads | Multer (`server/uploads`) |
+| Auth | bcrypt-hashed accounts; role-based **admin** vs **user** |
 
 ---
 
 ## Prerequisites
 
-Node.js 18+, npm, and a running **MongoDB** (local or Atlas).
+- Node.js 18+
+- npm (or yarn)
+- MongoDB (local or Atlas)
 
 ---
 
-## Run locally
+## Setup
 
-1. **Clone**
+### 1. Clone and install
 
-   ```bash
-   git clone https://github.com/nes268/CITBIF.git
-   cd CITBIF
-   ```
+```bash
+git clone https://github.com/Keerthana-R786/startup.git
+cd startup
+```
 
-2. **`server/.env`**
+**Backend**
 
-   ```
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/citbif
-   ```
+```bash
+cd server
+npm install
+```
 
-   Optional mail (e.g. Gmail):
+Create `server/.env`:
 
-   ```
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=587
-   SMTP_USER=...
-   SMTP_PASS=...
-   ```
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/citbif
+```
 
-   (`EMAIL_USER` / `EMAIL_PASSWORD` are also read in code paths.)
+Start API:
 
-3. **Root `.env`**
+```bash
+npm start
+# or
+npm run dev
+```
 
-   ```
-   VITE_API_URL=http://localhost:5000
-   ```
+API base: `http://localhost:5000` (use `/api/health` to verify).
 
-   No trailing slash. Match the port to `PORT`.
+**Frontend** (from repo root)
 
-4. **Install** — `cd server && npm install`, then from repo root `npm install`.
+```bash
+cd ..
+npm install
+```
 
-5. **Start API** — `cd server && npm start` (or `npm run dev` for `node --watch`). Check `GET /api/health`.
+Create `.env` in the project root:
 
-6. **Start UI** — from root, `npm run dev`. Open the URL Vite prints (often port **5173**).
+```env
+VITE_API_URL=http://localhost:5000
+```
 
-Optional: from `server/`, `npm run test-connection` or `npm run seed-admin` if you use those scripts.
+```bash
+npm run dev
+```
 
----
+App URL is printed by Vite (typically `http://localhost:5173`).
 
-## Accounts
+### 2. MongoDB
 
-Sign up as **Admin** or **User**. Admins land in `/admin/...`. Users finish the **profile wizard**; after approval they use `/dashboard/...`.
-
----
-
-## API
-
-All routes are under `/api` in **`server/index.js`**. Front-end callers live in **`src/services/*.ts`**. Areas include auth, profiles, startups (including approve, reject, phase), documents, mentors, investors, events, reports, notifications.
-
----
-
-## Repo layout
-
-- **`server/`** — `index.js`, `uploads/`, `package.json`
-- **`src/`** — `components/` (auth, dashboard, profile, layout, ui), `context/`, `hooks/`, `services/`, `types/`, `App.tsx`, `main.tsx`
-- **`public/`** — Static assets (e.g. favicon)
+With `MONGODB_URI` set, collections are created as models are used, for example: `users`, `admins`, `profiles`, `startups`, `documents`, `mentors`, `investors`, `events`, `reports`, `usernotifications`, `adminnotifications`.
 
 ---
 
-## Production
+## Project layout
 
-Set `VITE_API_URL` when you run `npm run build`. Serve the `dist/` folder over HTTPS. Tighten CORS, secrets, and server-side checks on protected actions.
+```
+startup/
+├── server/
+│   ├── index.js       # Express app, routes, sync helpers
+│   ├── uploads/       # Stored uploads
+│   └── package.json
+├── src/
+│   ├── components/    # auth, dashboard (startup + admin), profile, layout, ui
+│   ├── context/       # Auth, applications, notifications, funding, alerts
+│   ├── hooks/         # e.g. useStartups
+│   ├── services/      # REST clients
+│   ├── types/
+│   ├── App.tsx
+│   └── main.tsx
+├── package.json
+├── vite.config.ts
+├── tailwind.config.js
+└── README.md
+```
 
 ---
 
-## Troubleshooting
+## Usage (quick)
 
-API/CORS or blank UI: confirm `VITE_API_URL`, API running, and browser console. Mongo: check `MONGODB_URI` and that the service is reachable. Port clash: change `PORT` and `VITE_API_URL` together.
+1. Start MongoDB, then the **server**, then **Vite**.
+2. **Signup** — Choose **Admin** or **User**.
+3. **Founder** — Complete **Profile wizard**; wait for approval if required, then use the dashboard.
+4. **Admin** — Use **Review** to approve/reject; use **Startup management** and other admin pages for ongoing operations.
+
+---
+
+## API (overview)
+
+All routes are under `/api` unless noted.
+
+| Area | Examples |
+|------|-----------|
+| Auth | `POST /api/auth/signup`, `POST /api/auth/login` |
+| Profiles | `GET /api/profiles/user/:userId`, `POST /api/profiles`, `PUT /api/profiles/:id` |
+| Startups | `GET /api/startups`, `GET /api/startups/:id`, `POST /api/startups`, `PUT /api/startups/:id`, `PUT /api/startups/phase/:userId`, `POST .../approve`, `POST .../reject` |
+| Documents | Upload/list/by user/by startup/delete |
+| Mentors & events | CRUD + `POST /api/mentors/request-session` |
+| Investors       | CRUD + `POST /api/investors/request-intro` |
+| Reports         | List/create/update/delete + download helpers |
+| Notifications   | User and admin list/read/unread-count/delete |
+
+For exact payloads, inspect `server/index.js` or the `src/services/*Api.ts` callers.
+
+---
+
+## Scripts
+
+| Location | Command | Purpose |
+|----------|---------|---------|
+| Root | `npm run dev` | Vite dev server |
+| Root | `npm run build` | Production build → `dist/` |
+| Root | `npm run preview` | Preview production build |
+| `server/` | `npm start` | Run API |
+| `server/` | `npm run dev` | API with `node --watch` reload |
+
+---
+
+## Environment variables
+
+**`server/.env`**
+
+- `PORT` — API port (default 5000).
+- `MONGODB_URI` — Mongo connection string.
+
+**Root `.env`**
+
+- `VITE_API_URL` — Base URL of the API (e.g. `http://localhost:5000`).
+
+---
+
+## Production notes
+
+Point `VITE_API_URL` at your deployed API, set a strong `MONGODB_URI`, and serve the Vite `dist` output behind HTTPS. Restrict CORS and protect admin routes appropriately for your deployment.
 
 ---
 
 ## License
 
-ISC (see `server/package.json`).
+ISC (see repository).
 
 ## Contributing
 
-Fork, branch, open a PR with a short description of changes and any new env vars or routes.
+Fork, branch, open a PR with a clear description of behavior changes.
