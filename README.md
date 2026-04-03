@@ -1,201 +1,145 @@
 # CITBIF
 
-Full-stack platform for an incubation program: founders submit applications and run their startup workspace; administrators review applicants, manage the portfolio, and operate shared services (mentors, investors, events, documents).
+## Overview
 
-**How data stays aligned:** Saving a profile updates the linked **Startup** record where it matters for admin lists (name, founder, email, sector, program type). Founders set **current stage** (idea → scale) in **Settings**; that value is stored on **Startup** and appears in admin review and startup detail views. Admin screens refresh periodically and when you return to the tab so you see recent founder changes without reloading the app.
+- Incubation platform: **founders** apply and work in a dashboard; **admins** review, approve, and run program tools.
+- **Stack:** React (TypeScript, Vite) + Express + MongoDB. Files on disk under `server/uploads`.
+- **Flow:** Splash → login → (user) **6-step profile setup** → **pending** → admin **approve/reject** → approved users get **dashboard**.
 
----
+## Key features
 
-## Features
+- 6-step **profile setup**; **Startup** record for review.
+- Founder: overview, data room, mentors, investors, calendar, pitch deck, fundraising, settings.
+- Admin: review, startups, data room, events, mentors, investors, notifications.
+- Profile can sync listing fields to **Startup**; **stage** (idea→scale) in settings.
 
-### Founders (dashboard)
+## Flow (short)
 
-- **Profile wizard** — Multi-step onboarding (personal, company, incubation history, documents, pitch/traction, funding).
-- **Overview & workspace** — Status, stage, and program context.
-- **Data room** — Upload and organize documents.
-- **Mentors** — Directory and session requests.
-- **Investors** — Directory and intro requests.
-- **Pitch deck & fundraising** — Deck tooling and funding progress (UI state).
-- **Calendar** — Events.
-- **Settings** — Personal details, startup stage, dropout/active status where applicable.
+1. `/` → splash → login / signup  
+2. Auth → role **user** or **admin** (client: `localStorage`)  
+3. User completes **profile setup** → **Profile** + **Startup** (`pending`)  
+4. Admin **Review** → approve or reject  
+5. Approved user → `/dashboard` …  
+6. Admin → events, directories, data room, notifications  
 
-**Access rules:** Users need a linked startup from onboarding. Pending or rejected applications see a holding state until approved (then full dashboard).
+## Profile setup (6 steps)
 
-### Administrators
+1. Personal  
+2. Enterprise (startup, sector, type, founders)  
+3. Incubation history  
+4. Documents / uploads  
+5. Pitch & traction  
+6. Funding  
 
-- **Dashboard** — Metrics and startup overview; data refreshes on a timer and when the browser tab becomes visible.
-- **Review** — Application list and per-startup detail (summary, full profile tabs, startup stage, approve/reject).
-- **Startup management** — Approved portfolio; modal with startup basics (including **current stage**) and full profile.
-- **Data room (admin)** — Browse startups and their files.
-- **Mentors / investors / events** — CRUD-style management and directory maintenance.
-- **Notifications** — Separate feeds for admins and founders (e.g. approvals, intros, rejections).
+Submit → API saves profile; **Startup** created/updated → **pending**.
 
----
+## Admin approval
+
+- **Review** → list → open detail (summary, stage, profile tabs).  
+- **Approve** / **Reject** → API updates status.  
+- Not approved → gate screen instead of full dashboard.
+
+## Founder modules (`/dashboard`)
+
+| Module | Notes |
+|--------|--------|
+| Overview | Status, stage |
+| Data room | Documents |
+| Mentors | Directory, session request (+ email if SMTP set) |
+| Investors | Directory, intro request |
+| Calendar | Program events |
+| Pitch deck / Fundraising | Workspace UI |
+| Settings | Personal info, stage, status |
+
+## Admin areas
+
+| Area | Notes |
+|------|--------|
+| Overview | Metrics; refresh on timer / tab focus |
+| Review | Approve / reject |
+| Startups | Portfolio + profile modal |
+| Data room | All startups’ files |
+| Events / Mentors / Investors | Manage |
+| Notifications | Admin feed |
 
 ## Tech stack
 
-| Layer | Technologies |
-|--------|----------------|
-| Frontend | React 18, TypeScript, Vite, React Router, Tailwind CSS, Lucide icons |
-| Backend | Node.js, Express, MongoDB, Mongoose |
-| Uploads | Multer (`server/uploads`) |
-| Auth | bcrypt-hashed accounts; role-based **admin** vs **user** |
+| Layer | Tech |
+|--------|------|
+| Frontend | React 18, TypeScript, Vite, React Router, Tailwind, Framer Motion, Lucide, `fetch` |
+| Backend | Node, Express, MongoDB, Mongoose, bcryptjs, Multer, dotenv, cors |
+| Optional | Nodemailer (SMTP) |
 
----
+## Architecture
 
-## Prerequisites
+- SPA loads from Vite.  
+- `src/services/*` → `VITE_API_URL` + `/api/*`.  
+- `server/index.js` → Mongoose → MongoDB.  
+- Uploads → `server/uploads`.  
+- JSON responses; auth state in `localStorage` (`AuthContext`).
 
-- Node.js 18+
-- npm (or yarn)
-- MongoDB (local or Atlas)
-
----
-
-## Setup
-
-### 1. Clone and install
+## Clone
 
 ```bash
-git clone https://github.com/Keerthana-R786/startup.git
-cd startup
+git clone https://github.com/nes268/CITBIF.git
+cd CITBIF
 ```
 
-**Backend**
+## Backend
 
 ```bash
 cd server
 npm install
-```
-
-Create `server/.env`:
-
-```env
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/citbif
-```
-
-Start API:
-
-```bash
+# add server/.env (see table below)
 npm start
-# or
-npm run dev
+# or: npm run dev
 ```
 
-API base: `http://localhost:5000` (use `/api/health` to verify).
+Check: `GET http://localhost:5000/api/health`
 
-**Frontend** (from repo root)
+## Frontend
 
 ```bash
-cd ..
+# repo root
 npm install
-```
-
-Create `.env` in the project root:
-
-```env
-VITE_API_URL=http://localhost:5000
-```
-
-```bash
+# add root .env → VITE_API_URL=http://localhost:5000
 npm run dev
 ```
 
-App URL is printed by Vite (typically `http://localhost:5173`).
+## Run
 
-### 2. MongoDB
+Mongo running → start **server** → start **frontend** → open Vite URL (often `:5173`).
 
-With `MONGODB_URI` set, collections are created as models are used, for example: `users`, `admins`, `profiles`, `startups`, `documents`, `mentors`, `investors`, `events`, `reports`, `usernotifications`, `adminnotifications`.
+## Accounts
 
----
+- **Signup** → Admin **or** User.  
+- **Admin** → `/admin/...`, use Review.  
+- **User** → profile setup → wait if pending → after approve → `/dashboard`.
 
-## Project layout
+## `.env`
 
-```
-startup/
-├── server/
-│   ├── index.js       # Express app, routes, sync helpers
-│   ├── uploads/       # Stored uploads
-│   └── package.json
-├── src/
-│   ├── components/    # auth, dashboard (startup + admin), profile, layout, ui
-│   ├── context/       # Auth, applications, notifications, funding, alerts
-│   ├── hooks/         # e.g. useStartups
-│   ├── services/      # REST clients
-│   ├── types/
-│   ├── App.tsx
-│   └── main.tsx
-├── package.json
-├── vite.config.ts
-├── tailwind.config.js
-└── README.md
-```
+| File | Var | Notes |
+|------|-----|--------|
+| `server/.env` | `MONGODB_URI` | Required |
+| `server/.env` | `PORT` | Optional, e.g. `5000` |
+| `server/.env` | `SMTP_*` or `EMAIL_*` | Optional mail |
+| root `.env` | `VITE_API_URL` | No trailing slash; set at build for prod |
 
----
-
-## Usage (quick)
-
-1. Start MongoDB, then the **server**, then **Vite**.
-2. **Signup** — Choose **Admin** or **User**.
-3. **Founder** — Complete **Profile wizard**; wait for approval if required, then use the dashboard.
-4. **Admin** — Use **Review** to approve/reject; use **Startup management** and other admin pages for ongoing operations.
-
----
-
-## API (overview)
-
-All routes are under `/api` unless noted.
-
-| Area | Examples |
-|------|-----------|
-| Auth | `POST /api/auth/signup`, `POST /api/auth/login` |
-| Profiles | `GET /api/profiles/user/:userId`, `POST /api/profiles`, `PUT /api/profiles/:id` |
-| Startups | `GET /api/startups`, `GET /api/startups/:id`, `POST /api/startups`, `PUT /api/startups/:id`, `PUT /api/startups/phase/:userId`, `POST .../approve`, `POST .../reject` |
-| Documents | Upload/list/by user/by startup/delete |
-| Mentors & events | CRUD + `POST /api/mentors/request-session` |
-| Investors       | CRUD + `POST /api/investors/request-intro` |
-| Reports         | List/create/update/delete + download helpers |
-| Notifications   | User and admin list/read/unread-count/delete |
-
-For exact payloads, inspect `server/index.js` or the `src/services/*Api.ts` callers.
-
----
+Do not commit secrets.
 
 ## Scripts
 
-| Location | Command | Purpose |
-|----------|---------|---------|
-| Root | `npm run dev` | Vite dev server |
-| Root | `npm run build` | Production build → `dist/` |
-| Root | `npm run preview` | Preview production build |
-| `server/` | `npm start` | Run API |
-| `server/` | `npm run dev` | API with `node --watch` reload |
+- `server/`: `npm start`, `npm run dev`  
+- Root: `npm run dev`, `build`, `preview`, `lint`
 
----
+## Production
 
-## Environment variables
-
-**`server/.env`**
-
-- `PORT` — API port (default 5000).
-- `MONGODB_URI` — Mongo connection string.
-
-**Root `.env`**
-
-- `VITE_API_URL` — Base URL of the API (e.g. `http://localhost:5000`).
-
----
-
-## Production notes
-
-Point `VITE_API_URL` at your deployed API, set a strong `MONGODB_URI`, and serve the Vite `dist` output behind HTTPS. Restrict CORS and protect admin routes appropriately for your deployment.
-
----
+Build with correct `VITE_API_URL`. Serve `dist/` over HTTPS; lock down CORS and server auth.
 
 ## License
 
-ISC (see repository).
+ISC (`server/package.json`).
 
 ## Contributing
 
-Fork, branch, open a PR with a clear description of behavior changes.
+Fork → branch → PR with a short summary of changes.

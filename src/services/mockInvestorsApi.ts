@@ -1,4 +1,4 @@
-import { Investor, CreateInvestorData, UpdateInvestorData } from '../types';
+import { Investor, UpdateInvestorData } from '../types';
 
 // Mock data storage - Start with empty array
 let investors: Investor[] = [];
@@ -66,20 +66,6 @@ class MockInvestorsApi {
       throw new Error('Investor not found');
     }
     return investor;
-  }
-
-  async createInvestor(investorData: CreateInvestorData): Promise<Investor> {
-    await delay(800);
-    
-    const newInvestor: Investor = {
-      id: Date.now().toString(),
-      ...investorData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    investors.push(newInvestor);
-    return newInvestor;
   }
 
   async updateInvestor(investorData: UpdateInvestorData): Promise<Investor> {

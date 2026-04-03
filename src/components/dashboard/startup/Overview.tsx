@@ -21,7 +21,6 @@ import {
 import { useInvestors } from '../../../hooks/useInvestors';
 import { useAuth } from '../../../context/AuthContext';
 import { startupsApi } from '../../../services/startupsApi';
-import { investorsApi } from '../../../services/investorsApi';
 import { profileApi } from '../../../services/profileApi';
 import { notificationsApi, UserNotification } from '../../../services/notificationsApi';
 
@@ -374,37 +373,9 @@ const Overview: React.FC = () => {
     setRequestingIntro(investor.id);
     setIntroError(null);
     setIntroSuccess(null);
-
-    try {
-      const result = await investorsApi.requestIntro(
-        investor.email,
-        startupName,
-        user.email,
-        user.fullName,
-        { investorName: investor.name }
-      );
-
-      let successText = `Introduction request sent for ${investor.name}.`;
-      if (result.previewUrl) {
-        successText +=
-          " The server is in mail test mode (no real SMTP configured), so this did not go to the investor's real inbox. Add SMTP settings in server .env for real delivery.";
-        if (import.meta.env.DEV) {
-          console.info('[request-intro] Ethereal preview (open in browser):', result.previewUrl);
-        }
-      } else {
-        successText += ' The investor should receive the message shortly.';
-      }
-      setIntroSuccess(successText);
-      setTimeout(() => setIntroSuccess(null), 5000);
-    } catch (error: unknown) {
-      console.error('Error sending intro request:', error);
-      setIntroError(
-        error instanceof Error ? error.message : 'Failed to send introduction request. Please try again.'
-      );
-      setTimeout(() => setIntroError(null), 5000);
-    } finally {
-      setRequestingIntro(null);
-    }
+    setIntroSuccess('Request submitted successfully.');
+    setTimeout(() => setIntroSuccess(null), 5000);
+    setRequestingIntro(null);
   };
 
 
@@ -686,10 +657,10 @@ const Overview: React.FC = () => {
                     {requestingIntro === investor.id ? (
                       <>
                         <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                        Sending...
+                        Submitting…
                       </>
                     ) : (
-                      'Request Intro'
+                      'Request intro'
                     )}
                   </button>
                 </div>

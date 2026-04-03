@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { useInvestors } from '../../hooks/useInvestors';
 import { useAuth } from '../../context/AuthContext';
 import { startupsApi } from '../../services/startupsApi';
-import { investorsApi } from '../../services/investorsApi';
 import { profileApi } from '../../services/profileApi';
 import { Investor } from '../../types';
 import InvestorDirectoryTable from './InvestorDirectoryTable';
@@ -75,35 +74,9 @@ const Investors: React.FC = () => {
     setRequestingIntro(investor.id);
     setIntroError(null);
     setIntroSuccess(null);
-    try {
-      const result = await investorsApi.requestIntro(
-        investor.email,
-        startupName,
-        user.email,
-        user.fullName,
-        { investorName: investor.name }
-      );
-      let successText = `Introduction request sent for ${investor.name}.`;
-      if (result.previewUrl) {
-        successText +=
-          " The server is in mail test mode (no real SMTP configured), so this did not go to the investor's real inbox. Add SMTP settings in server .env for real delivery.";
-        if (import.meta.env.DEV) {
-          console.info('[request-intro] Ethereal preview (open in browser):', result.previewUrl);
-        }
-      } else {
-        successText += ' The investor should receive the message shortly.';
-      }
-      setIntroSuccess(successText);
-      setTimeout(() => setIntroSuccess(null), 5000);
-    } catch (err: unknown) {
-      console.error(err);
-      const message = err instanceof Error ? err.message : 'Failed to send introduction request.';
-      setIntroError(message);
-      setTimeout(() => setIntroError(null), 5000);
-      throw err instanceof Error ? err : new Error(message);
-    } finally {
-      setRequestingIntro(null);
-    }
+    setIntroSuccess('Request submitted successfully.');
+    setTimeout(() => setIntroSuccess(null), 5000);
+    setRequestingIntro(null);
   };
 
   return (

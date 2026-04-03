@@ -1,4 +1,4 @@
-import { Investor, CreateInvestorData, UpdateInvestorData } from '../types';
+import { Investor, UpdateInvestorData } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -43,17 +43,6 @@ class InvestorsApi {
     return this.handleResponse<Investor>(response);
   }
 
-  async createInvestor(investorData: CreateInvestorData): Promise<Investor> {
-    const response = await fetch(`${API_URL}/api/investors`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(investorData),
-    });
-    return this.handleResponse<Investor>(response);
-  }
-
   async updateInvestor(investorData: UpdateInvestorData): Promise<Investor> {
     const { id, ...updateData } = investorData;
     const response = await fetch(`${API_URL}/api/investors/${id}`, {
@@ -79,29 +68,6 @@ class InvestorsApi {
     }
   }
 
-  async requestIntro(
-    investorEmail: string,
-    startupName: string,
-    requesterEmail: string,
-    requesterName: string,
-    options?: { message?: string; investorName?: string }
-  ): Promise<{ message: string; sent: boolean; previewUrl?: string }> {
-    const response = await fetch(`${API_URL}/api/investors/request-intro`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        investorEmail,
-        startupName,
-        requesterEmail,
-        requesterName,
-        message: options?.message || '',
-        investorName: options?.investorName || '',
-      }),
-    });
-    return this.handleResponse<{ message: string; sent: boolean; previewUrl?: string }>(response);
-  }
 }
 
 export const investorsApi = new InvestorsApi();

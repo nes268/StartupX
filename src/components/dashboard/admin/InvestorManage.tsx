@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Plus, Edit, Trash2, Search, DollarSign, Mail, Phone, AlertCircle, Loader2 } from 'lucide-react';
+import { Edit, Trash2, Search, DollarSign, Mail, Phone, AlertCircle, Loader2 } from 'lucide-react';
 import { Investor, CreateInvestorData } from '../../../types';
 import { useInvestors } from '../../../hooks/useInvestors';
 
@@ -17,7 +17,6 @@ const InvestorManage: React.FC = () => {
     investors,
     loading,
     error,
-    createInvestor,
     updateInvestor,
     deleteInvestor,
     refreshInvestors
@@ -92,24 +91,18 @@ const InvestorManage: React.FC = () => {
     }
     
     try {
-      // Auto-generate profile picture initials if not provided
+      if (!editingInvestor) return;
+
       const investorData = {
         ...formData,
         profilePicture: formData.profilePicture || getInitials(formData.name)
       };
 
-      if (editingInvestor) {
-        await updateInvestor({
-          id: editingInvestor.id,
-          ...investorData
-        });
-        setSuccessMessage('Investor updated successfully!');
-      } else {
-        await createInvestor(investorData);
-        setSuccessMessage('Investor added successfully!');
-        // Refresh the investors list to ensure it's up to date
-        await refreshInvestors();
-      }
+      await updateInvestor({
+        id: editingInvestor.id,
+        ...investorData
+      });
+      setSuccessMessage('Investor updated successfully!');
       
       // Wait a moment to show success message, then reset
       setTimeout(() => {
@@ -195,12 +188,8 @@ const InvestorManage: React.FC = () => {
             ← Back to Investors
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {editingInvestor ? 'Edit Investor' : 'Add New Investor'}
-            </h1>
-            <p className="text-gray-600 mt-1">
-              {editingInvestor ? 'Update investor information' : 'Add a new investor to the platform'}
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Investor</h1>
+            <p className="text-gray-600 mt-1">Update investor information</p>
           </div>
         </div>
 
@@ -315,10 +304,10 @@ const InvestorManage: React.FC = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    {editingInvestor ? 'Updating...' : 'Adding...'}
+                    Updating...
                   </>
                 ) : (
-                  editingInvestor ? 'Update Investor' : 'Add Investor'
+                  'Update Investor'
                 )}
               </Button>
             </div>
@@ -334,12 +323,8 @@ const InvestorManage: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Investor Management</h1>
-          <p className="text-gray-600 mt-1">Manage investors available for startups</p>
+          <p className="text-gray-600 mt-1">View and edit investors available to startups</p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2">
-          <Plus className="h-4 w-4" />
-          <span>Add Investor</span>
-        </Button>
       </div>
 
       {/* Error Display */}
@@ -455,15 +440,9 @@ const InvestorManage: React.FC = () => {
           <h3 className="text-lg font-medium text-gray-700 mb-2">
             {searchTerm ? 'No investors found' : 'No investors available'}
           </h3>
-          <p className="text-gray-600 mb-6">
-            {searchTerm 
-              ? 'Try adjusting your search criteria' 
-              : 'Add your first investor to get started'
-            }
+          <p className="text-gray-600">
+            {searchTerm ? 'Try adjusting your search criteria.' : 'No investors are listed yet.'}
           </p>
-          <Button onClick={() => setShowAddForm(true)}>
-            Add First Investor
-          </Button>
         </Card>
       )}
     </div>

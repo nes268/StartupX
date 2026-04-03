@@ -1134,34 +1134,6 @@ app.get('/api/investors', async (req, res) => {
   }
 });
 
-// POST request intro to investor (must be before /:id route). No outbound email — UI success only.
-app.post('/api/investors/request-intro', async (req, res) => {
-  try {
-    const { investorEmail, startupName, requesterEmail, requesterName } = req.body;
-
-    if (!investorEmail || !startupName || !requesterEmail || !requesterName) {
-      return res.status(400).json({
-        error: 'Investor email, startup name, requester email, and requester name are required',
-      });
-    }
-
-    const toEmail = String(investorEmail).trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
-      return res.status(400).json({ error: 'Invalid investor email address' });
-    }
-
-    res.status(200).json({
-      message: 'Request submitted successfully',
-      sent: true,
-    });
-  } catch (error) {
-    console.error('Error in request-intro:', error);
-    res.status(500).json({
-      error: 'Could not submit request: ' + (error.message || 'unknown error'),
-    });
-  }
-});
-
 // GET investor by ID
 app.get('/api/investors/:id', async (req, res) => {
   try {
@@ -1196,60 +1168,9 @@ app.get('/api/investors/:id', async (req, res) => {
   }
 });
 
-// POST create investor
+// POST create investor — disabled (add-via-UI removed; seed or migrate in DB if needed)
 app.post('/api/investors', async (req, res) => {
-  try {
-    const { name, firm, email, phoneNumber, investmentRange, focusAreas, backgroundSummary, profilePicture } = req.body;
-
-    if (!name || !firm || !email || !investmentRange || !backgroundSummary) {
-      return res.status(400).json({ error: 'Name, firm, email, investmentRange, and backgroundSummary are required' });
-    }
-
-    const existingInvestor = await Investor.findOne({ email });
-    if (existingInvestor) {
-      return res.status(400).json({ error: 'An investor with this email already exists' });
-    }
-
-    const newInvestor = new Investor({
-      name,
-      firm,
-      email,
-      phoneNumber: phoneNumber || '',
-      investmentRange,
-      focusAreas: focusAreas || [],
-      backgroundSummary,
-      profilePicture: profilePicture || '',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-
-    await newInvestor.save();
-
-    await notifyApprovedStartupUsers(
-      `A new investor profile is available: ${newInvestor.name} (${newInvestor.firm}). Check Available Investors on your dashboard to request an intro.`,
-      'investor'
-    );
-
-    res.status(201).json({
-      id: newInvestor._id.toString(),
-      name: newInvestor.name,
-      firm: newInvestor.firm,
-      email: newInvestor.email,
-      phoneNumber: newInvestor.phoneNumber,
-      investmentRange: newInvestor.investmentRange,
-      focusAreas: newInvestor.focusAreas,
-      backgroundSummary: newInvestor.backgroundSummary,
-      profilePicture: newInvestor.profilePicture,
-      createdAt: newInvestor.createdAt.toISOString(),
-      updatedAt: newInvestor.updatedAt.toISOString()
-    });
-  } catch (error) {
-    console.error('Error creating investor:', error);
-    if (error.code === 11000) {
-      return res.status(400).json({ error: 'An investor with this email already exists' });
-    }
-    res.status(500).json({ error: 'Server error while creating investor' });
-  }
+  res.status(403).json({ error: 'Creating new investors through the API is disabled.' });
 });
 
 // PUT update investor
