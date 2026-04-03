@@ -1,282 +1,410 @@
-# CITBIF
-
-
+# Startup Incubation Platform (CITBIF)
 
 ## Overview
 
+CITBIF is a full-stack incubation management platform designed for **startup founders and teams** applying to or participating in an incubation program.
 
+It supports the complete journey from **application intake** and **administrative review** to **portfolio management** and **founder workspace** operations.
 
-- Incubation platform for **startup users** (founders / teams): program intake, **startup application** review, and day-to-day **founder workspace** tools. **Program administrators** operate the cohort pipeline, portfolio, and shared resources.
+The platform serves two primary roles:
 
-- **Stack:** React (TypeScript, Vite) + Express + MongoDB. Uploads under `server/uploads`.
+| Role | Responsibility |
+|------|----------------|
+| **Startup users** | Founders or teams managing their **venture** profile, documents, requests, and progress. |
+| **Administrators** | Program managers handling **application review**, the **admitted portfolio**, shared resources, and day-to-day operations. |
 
-- **Flow:** **Authentication** → **startup users** complete **profile setup** → **startup** status **pending review** → **administrator adjudication** (approve or decline) → approved **startup users** access the **dashboard**.
+**Tech stack:** React + TypeScript + Vite + Express + MongoDB  
 
+**Storage:** File uploads are stored in `server/uploads`.
 
+---
 
 ## Key features
 
+### For startup users
 
+#### 1. Profile setup (6-step onboarding)
 
-- Six-step **profile setup**; **Startup** entity submitted for review.
+Startup users complete a structured onboarding process covering:
 
-- **Startup dashboard:** overview, data room, mentors, investors, calendar, pitch deck, fundraising, settings.
+1. Personal details  
+2. Venture / enterprise information  
+3. Incubation history  
+4. Due diligence documents  
+5. Pitch and traction details  
+6. Funding information  
 
-- **Administrator console:** application review, portfolio startups, data room, events, mentor/investor directories, notifications.
+Once submitted, **the application for program participation** is placed in **pending administrative review** (cohort workspace access is not yet granted).
 
-- Profile fields can sync to the **Startup** listing; **stage** (idea → scale) in settings.
+#### 2. Startup user dashboard (`/dashboard`)
 
+After **admission is approved**, startup users access a dedicated workspace with:
 
+| Area | Purpose |
+|------|---------|
+| **Overview** | Venture status and current stage |
+| **Data room** | Uploaded documents and files |
+| **Mentors** | Mentor directory and session requests |
+| **Investors** | Investor directory and intro requests |
+| **Calendar** | Events and important schedules |
+| **Pitch deck / Fundraising** | Founder-focused support tools |
+| **Settings** | Profile, participation, and stage updates |
 
-## Flow (short)
+#### 3. Stage management
 
+Founders set the venture’s current stage, for example:
 
+- **Idea**  
+- **Early**  
+- **Growth**  
+- **Scale**  
 
-1. **Authentication** — Registration or sign-in; role **startup user** or **administrator** (API role `user` / `admin`); session context on client (`localStorage`).  
+The chosen stage is reflected in both founder and admin views for consistency.
 
-2. **Startup onboarding** — Startup users complete **profile setup**; **Profile** and **Startup** stored; status **pending review**.  
+---
 
-3. **Application adjudication** — Administrators evaluate **startup applications** in **Review** (approve or decline).  
+### For administrators
 
-4. **Operations** — Approved startup users use `/dashboard`; administrators manage program assets (events, directories, data room, notifications).  
+#### 1. Application review
 
+Administrators review **applications submitted during onboarding** and can:
 
+- **Approve** admission  
+- **Decline** admission  
+- View **venture profile** and submission detail  
+
+Only **admitted** startup users receive full **`/dashboard`** access.
+
+#### 2. Portfolio management
+
+Administrators manage **admitted** ventures / participants, including:
+
+- Venture details  
+- Profile information  
+- Venture stage  
+- Shared records and updates  
+
+#### 3. Operations and resource management
+
+The admin console includes:
+
+| Area | Purpose |
+|------|---------|
+| **Overview** | Overall portfolio and platform metrics |
+| **Review** | Review and adjudicate participant applications |
+| **Startups** | Manage the admitted portfolio (UI naming) |
+| **Data room** | Cross-portfolio document access |
+| **Events** | Incubation event management |
+| **Mentors** | Mentor profiles |
+| **Investors** | Investor profiles |
+| **Notifications** | System and admin alerts |
+
+---
+
+## Application flow
+
+The platform follows a clear **admission workflow**.
+
+### User journey
+
+#### 1. Authentication
+
+Users sign up or sign in as:
+
+- **Startup user** (`user`)  
+- **Administrator** (`admin`)  
+
+Authentication state is maintained on the client (e.g. `localStorage`).
+
+#### 2. Onboarding
+
+Startup users complete the 6-step onboarding form and submit venture details. At this stage:
+
+- Their **profile** is stored  
+- **Venture** data and related application records are persisted  
+- **The application for participation** remains **pending review**
+
+#### 3. Administrative review
+
+Administrators evaluate submitted applications and decide whether to:
+
+- **Approve** admission  
+- **Decline** admission  
+
+#### 4. Platform usage
+
+Once approved:
+
+- **Startup users** use `/dashboard`  
+- **Administrators** use `/admin/...`
+
+---
 
 ## Profile setup (6 steps)
 
+| Step | Content |
+|------|---------|
+| **Personal** | Founder identity and contact details |
+| **Enterprise** | Venture name, sector, track, founding team |
+| **Incubation history** | Prior incubator or accelerator participation |
+| **Due diligence** | Required document uploads |
+| **Pitch & traction** | Business narrative and progress |
+| **Funding** | Funding stage, needs, and ask |
 
+Submitting the form sends **the application** into the **administrative review** queue.
 
-1. Personal  
+---
 
-2. Enterprise (venture, sector, program track, founding team)  
+## Startup user dashboard modules
 
-3. Incubation history  
+| Module | Purpose |
+|--------|---------|
+| **Overview** | Venture status and current stage |
+| **Data room** | Venture documents and uploads |
+| **Mentors** | Mentor directory and session request flow |
+| **Investors** | Investor directory and intro request flow |
+| **Calendar** | Events and schedule management |
+| **Pitch deck / Fundraising** | Founder support tools |
+| **Settings** | Profile, venture stage, and participation controls |
 
-4. Due diligence documents / uploads  
+**Note:** Mentor and investor request notifications are **in-app only**. **SMTP / outbound email** for those flows is **planned** (not implemented yet).
 
-5. Pitch & traction  
-
-6. Funding  
-
-
-
-On submission, the API persists the profile; **Startup** is created or updated and marked **pending** for review.
-
-
-
-## Application review (administrators)
-
-
-
-- **Review** — Queue of **startup applications**; detail (summary, stage, tabbed profile).  
-
-- **Approve** / **Reject** — Updates **Startup** status.  
-
-- Pending or rejected applications: **dashboard** access restricted until approved.
-
-
-
-## Startup dashboard (`/dashboard`)
-
-
-
-| Module | Notes |
-
-|--------|--------|
-
-| Overview | Venture status, **startup stage** |
-
-| Data room | Startup documents and uploads |
-
-| Mentors | Mentor network, session requests (in-app). **SMTP email for mentor requests — not implemented; to be implemented.** |
-
-| Investors | Investor directory, intro requests (in-app). **SMTP email for investor requests — not implemented; to be implemented.** |
-
-| Calendar | Cohort and program events |
-
-| Pitch deck / Fundraising | Founder tooling (UI) |
-
-| Settings | Profile, stage, participation status |
-
-
+---
 
 ## Administrator console
 
+| Area | Purpose |
+|------|---------|
+| **Overview** | Portfolio and platform metrics |
+| **Review** | Review and adjudicate participant applications |
+| **Startups** | Admitted portfolio management |
+| **Data room** | Access uploaded venture documents |
+| **Events** | Create and manage incubation events |
+| **Mentors** | Manage mentor profiles |
+| **Investors** | Manage investor profiles |
+| **Notifications** | System and admin alerts |
 
-
-| Area | Notes |
-
-|------|--------|
-
-| Overview | Portfolio metrics; periodic / tab-focus refresh |
-
-| Review | **Startup application** approve / reject |
-
-| Startups | Approved **portfolio**; startup + profile detail |
-
-| Data room | Cross-portfolio document access |
-
-| Events / Mentors / Investors | Program operations |
-
-| Notifications | Admin notification feed |
-
-
+---
 
 ## Tech stack
 
+### Frontend
 
+- React 18  
+- TypeScript  
+- Vite  
+- React Router  
+- Tailwind CSS  
+- Framer Motion  
+- Lucide React  
+- Fetch API  
 
-| Layer | Tech |
+### Backend
 
-|--------|------|
+- Node.js  
+- Express.js  
+- MongoDB  
+- Mongoose  
+- bcryptjs  
+- Multer  
+- dotenv  
+- cors  
 
-| Frontend | React 18, TypeScript, Vite, React Router, Tailwind, Framer Motion, Lucide, `fetch` |
+### Planned / future
 
-| Backend | Node, Express, MongoDB, Mongoose, bcryptjs, Multer, dotenv, cors |
+- **Nodemailer / SMTP** integration for mentor and investor request emails  
 
-| Optional | Nodemailer (SMTP) — intended for future outbound mail once mentor/investor request email is **implemented** |
+---
 
+## Technical architecture
 
+| Concern | Implementation |
+|---------|------------------|
+| **Frontend** | Single-page application built with Vite |
+| **API** | `src/services/*` uses `VITE_API_URL` + `/api/*` |
+| **Authentication** | Sign-up / sign-in via REST API |
+| **Password security** | Passwords hashed with bcryptjs |
+| **Session** | Client-side auth context with `localStorage` |
+| **Backend** | Express server + MongoDB via Mongoose |
+| **File uploads** | Stored under `server/uploads` |
 
-## Architecture
+---
 
+## Setup instructions
 
-
-- SPA (Vite); `src/services/*` → `VITE_API_URL` + `/api/*`.  
-
-- **Authentication:** `POST /api/auth/signup`, `POST /api/auth/login`; **bcryptjs** on server; client context (`AuthContext`, `localStorage`).  
-
-- `server/index.js` → Mongoose → MongoDB; uploads → `server/uploads`; JSON API.
-
-
-
-## Clone
-
-
+### 1. Clone the repository
 
 ```bash
-
 git clone https://github.com/nes268/CITBIF.git
-
 cd CITBIF
-
 ```
 
-
-
-## Backend
-
-
+### 2. Backend setup
 
 ```bash
-
 cd server
-
 npm install
-
-# add server/.env (see table below)
-
-npm start
-
-# or: npm run dev
-
 ```
 
+Create `server/.env`:
 
+```env
+MONGODB_URI=mongodb://localhost:27017/citbif
+PORT=5000
+```
 
-Check: `GET http://localhost:5000/api/health`
-
-
-
-## Frontend
-
-
+Start the backend:
 
 ```bash
-
-# repo root
-
-npm install
-
-# add root .env → VITE_API_URL=http://localhost:5000
-
+npm start
+# or
 npm run dev
-
 ```
 
+- API base: `http://localhost:5000`  
+- Health check: `GET /api/health`
 
+### 3. Frontend setup
 
-## Run
+From the repository root:
 
+```bash
+cd ..
+npm install
+```
 
+Create a root `.env`:
 
-MongoDB running → start **server** → start **frontend** → open Vite URL (often `:5173`).
+```env
+VITE_API_URL=http://localhost:5000
+```
 
+Start the frontend:
 
+```bash
+npm run dev
+```
 
-## Accounts
+Frontend dev server is typically `http://localhost:5173`.
 
+### 4. Running the application
 
+| Order | Step |
+|-------|------|
+| 1 | Start MongoDB |
+| 2 | Start the backend server |
+| 3 | Start the frontend server |
+| 4 | Open the frontend URL in the browser |
 
-- **Registration** — **Administrator** or **startup user** (application role `admin` / `user`).  
+### 5. Roles and access
 
-- **Administrators** — `/admin/...`; **Review** for **startup applications**.  
+**Startup users**
 
-- **Startup users** — **Profile setup** → await adjudication → after **approval**, `/dashboard`.
+1. Sign up with role `user`  
+2. Complete the onboarding profile  
+3. Wait for administrative approval  
+4. Access `/dashboard` after admission is approved  
 
+**Administrators**
 
+1. Sign up with role `admin`  
+2. Access `/admin/...`  
+3. Review and manage applications  
+4. Operate platform resources (events, directories, data room, notifications)  
 
-## `.env`
+Do not commit secrets or `.env` files.
 
+---
 
+## Environment variables
 
-| File | Var | Notes |
+### Backend (`server/.env`)
 
-|------|-----|--------|
+| Variable | Notes |
+|----------|--------|
+| `MONGODB_URI` | Required — MongoDB connection string |
+| `PORT` | Optional — e.g. `5000` |
 
-| `server/.env` | `MONGODB_URI` | Required |
+Optional placeholders (**future / not wired for mentor–investor mail yet**):
 
-| `server/.env` | `PORT` | Optional, e.g. `5000` |
+```env
+SMTP_HOST=
+SMTP_PORT=
+SMTP_USER=
+SMTP_PASS=
+```
 
-| `server/.env` | `SMTP_*` or `EMAIL_*` | **To be implemented** for mentor/investor request notifications (not active for those flows yet) |
+### Frontend (root `.env`)
 
-| root `.env` | `VITE_API_URL` | No trailing slash; set at build for prod |
+```env
+VITE_API_URL=http://localhost:5000
+```
 
+Use the correct production API URL when deploying (no trailing slash).
 
+---
 
-Do not commit secrets.
+## Available scripts
 
+**Backend (`server/`)**
 
+```bash
+npm start
+npm run dev
+```
 
-## Scripts
+**Frontend (repository root)**
 
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+```
 
+---
 
-- `server/`: `npm start`, `npm run dev`  
+## Production notes
 
-- Root: `npm run dev`, `build`, `preview`, `lint`
+- Build the frontend with the correct `VITE_API_URL`  
+- Serve `dist/` over HTTPS  
+- Configure CORS securely  
+- Protect all private API routes  
+- Consider cloud object storage for uploads (e.g. S3, Cloudinary) instead of local `server/uploads`  
 
+---
 
+## Future improvements
 
-## Production
+- SMTP email notifications for mentor / investor requests  
+- Cloud file storage (AWS S3, Cloudinary, etc.)  
+- Stronger role-based route protection  
+- Admin analytics enhancements  
+- Notification system upgrades  
+- Deeper fundraising and pitch support tooling  
 
-
-
-Build with correct `VITE_API_URL`. Serve `dist/` over HTTPS; lock down CORS and server-side authorization.
-
-
+---
 
 ## License
 
+This project is licensed under the **ISC License** (see `server/package.json`).
 
-
-ISC (`server/package.json`).
-
-
+---
 
 ## Contributing
 
+Contributions are welcome.
 
+**Workflow**
 
-Fork → branch → PR with a short summary of changes.
+1. Fork the repository  
+2. Create a feature branch  
+3. Make your changes  
+4. Commit your updates  
+5. Open a pull request  
 
+---
+
+## Support
+
+For issues, suggestions, or improvements, please open an issue in the repository.
