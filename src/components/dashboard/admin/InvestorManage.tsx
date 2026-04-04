@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Edit, Trash2, Search, DollarSign, Mail, Phone, AlertCircle, Loader2 } from 'lucide-react';
+import { ModalPortal } from '../../ui/ModalPortal';
+import ConnectionRequestsAdminPanel from './ConnectionRequestsAdminPanel';
+import { Plus, Edit, Trash2, Search, DollarSign, Mail, Phone, AlertCircle, Loader2, ClipboardList, X } from 'lucide-react';
 import { Investor, CreateInvestorData } from '../../../types';
 import { useInvestors } from '../../../hooks/useInvestors';
 
 const InvestorManage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [editingInvestor, setEditingInvestor] = useState<Investor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -17,6 +20,7 @@ const InvestorManage: React.FC = () => {
     investors,
     loading,
     error,
+    createInvestor,
     updateInvestor,
     deleteInvestor,
     refreshInvestors
@@ -91,20 +95,23 @@ const InvestorManage: React.FC = () => {
     }
     
     try {
-      if (!editingInvestor) return;
-
       const investorData = {
         ...formData,
         profilePicture: formData.profilePicture || getInitials(formData.name)
       };
 
-      await updateInvestor({
-        id: editingInvestor.id,
-        ...investorData
-      });
-      setSuccessMessage('Investor updated successfully!');
-      
-      // Wait a moment to show success message, then reset
+      if (editingInvestor) {
+        await updateInvestor({
+          id: editingInvestor.id,
+          ...investorData
+        });
+        setSuccessMessage('Investor updated successfully!');
+      } else {
+        await createInvestor(investorData);
+        setSuccessMessage('Investor added successfully!');
+        await refreshInvestors();
+      }
+
       setTimeout(() => {
         resetForm();
         setSuccessMessage(null);
@@ -132,6 +139,22 @@ const InvestorManage: React.FC = () => {
     setShowAddForm(false);
     setEditingInvestor(null);
     setSuccessMessage(null);
+  };
+
+  const openAddInvestor = () => {
+    setFormData({
+      name: '',
+      firm: '',
+      email: '',
+      phoneNumber: '',
+      investmentRange: '',
+      focusAreas: [],
+      backgroundSummary: '',
+      profilePicture: ''
+    });
+    setEditingInvestor(null);
+    setSuccessMessage(null);
+    setShowAddForm(true);
   };
 
   const handleEdit = (investor: Investor) => {
@@ -169,7 +192,7 @@ const InvestorManage: React.FC = () => {
             <p className="text-gray-600 mt-1">Manage investors available for startups</p>
           </div>
         </div>
-        
+
         <div className="flex items-center justify-center py-12">
           <div className="flex items-center space-x-3">
             <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
@@ -188,8 +211,12 @@ const InvestorManage: React.FC = () => {
             ← Back to Investors
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Edit Investor</h1>
-            <p className="text-gray-600 mt-1">Update investor information</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {editingInvestor ? 'Edit Investor' : 'Add New Investor'}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {editingInvestor ? 'Update investor information' : 'Add a new investor to the directory'}
+            </p>
           </div>
         </div>
 
@@ -304,10 +331,12 @@ const InvestorManage: React.FC = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Updating...
+                    {editingInvestor ? 'Updating...' : 'Adding...'}
                   </>
-                ) : (
+                ) : editingInvestor ? (
                   'Update Investor'
+                ) : (
+                  'Add Investor'
                 )}
               </Button>
             </div>
@@ -320,10 +349,25 @@ const InvestorManage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Investor Management</h1>
           <p className="text-gray-600 mt-1">View and edit investors available to startups</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowRequestsModal(true)}
+            className="flex items-center gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            <span>Investor requests</span>
+          </Button>
+          <Button type="button" onClick={openAddInvestor} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            <span>Add Investor</span>
+          </Button>
         </div>
       </div>
 
@@ -374,7 +418,7 @@ const InvestorManage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-sm font-bold text-gray-900">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-muted)] text-sm font-semibold text-[var(--accent)]">
                     {renderProfileAvatar(investor.profilePicture, investor.name)}
                   </div>
                   <div>
@@ -440,10 +484,39 @@ const InvestorManage: React.FC = () => {
           <h3 className="text-lg font-medium text-gray-700 mb-2">
             {searchTerm ? 'No investors found' : 'No investors available'}
           </h3>
-          <p className="text-gray-600">
-            {searchTerm ? 'Try adjusting your search criteria.' : 'No investors are listed yet.'}
+          <p className="text-gray-600 mb-6">
+            {searchTerm ? 'Try adjusting your search criteria.' : 'Add your first investor to get started.'}
           </p>
+          {!searchTerm && (
+            <Button type="button" onClick={openAddInvestor} className="flex items-center gap-2 mx-auto">
+              <Plus className="h-4 w-4" />
+              Add first investor
+            </Button>
+          )}
         </Card>
+      )}
+
+      {showRequestsModal && (
+        <ModalPortal onBackdropClick={() => setShowRequestsModal(false)}>
+          <div className="w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <Card className="flex max-h-[min(88vh,820px)] flex-col overflow-hidden border border-[var(--border-muted)] shadow-[var(--shadow-card)]">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border-muted)] px-4 py-3">
+                <h2 className="text-lg font-semibold text-[var(--text)]">Investor introduction requests</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowRequestsModal(false)}
+                  className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--bg-muted)]"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                <ConnectionRequestsAdminPanel targetType="investor" withCard={false} embedded />
+              </div>
+            </Card>
+          </div>
+        </ModalPortal>
       )}
     </div>
   );

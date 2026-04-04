@@ -429,20 +429,6 @@ const Review: React.FC = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    const normalizedStatus = normalizeStatusForReview(status);
-    switch (normalizedStatus) {
-      case 'approved':
-        return <CheckCircle className="h-4 w-4" />;
-      case 'rejected':
-        return <X className="h-4 w-4" />;
-      case 'pending':
-        return <AlertCircle className="h-4 w-4" />;
-      default:
-        return <AlertCircle className="h-4 w-4" />;
-    }
-  };
-
   /* ——— Detail view (routed: /admin/review/:startupId) ——— */
   if (routeStartupId) {
     if (detailLoading && !detailStartup) {
@@ -483,7 +469,6 @@ const Review: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {getStatusIcon(s.status)}
             <span className={`text-xs px-2 py-1 rounded-full capitalize ${getStatusColor(s.status)}`}>
               {normalizeStatusForReview(s.status)}
             </span>
@@ -721,11 +706,8 @@ const Review: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-4 py-3 align-middle">
-                      <span className="inline-flex items-center gap-1.5">
-                        {getStatusIcon(startup.status)}
-                        <span className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${getStatusColor(startup.status)}`}>
-                          {normalizeStatusForReview(startup.status)}
-                        </span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full capitalize font-medium ${getStatusColor(startup.status)}`}>
+                        {normalizeStatusForReview(startup.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 align-middle text-right" onClick={(e) => e.stopPropagation()}>

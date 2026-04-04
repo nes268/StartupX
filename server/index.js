@@ -171,16 +171,35 @@ const userNotificationSchema = new mongoose.Schema({
 const adminNotificationSchema = new mongoose.Schema({
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: false }, // null means notification for all admins
   message: { type: String, required: true },
-  type: { type: String, enum: ['new', 'info', 'feedback', 'review', 'signup', 'application', 'milestone'], required: true },
+  type: { type: String, enum: ['new', 'info', 'feedback', 'review', 'signup', 'application', 'milestone', 'connection_request'], required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: false },
   userName: { type: String, required: false },
   userEmail: { type: String, required: false },
   userRole: { type: String, enum: ['user', 'admin'], required: false },
   time: { type: String, required: false },
   read: { type: Boolean, default: false },
+  connectionRequestId: { type: mongoose.Schema.Types.ObjectId, ref: 'ConnectionRequest', required: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
+
+// Unified mentor / investor connection requests (MongoDB collection: requests)
+const connectionRequestSchema = new mongoose.Schema({
+  startupUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  targetId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  targetType: { type: String, enum: ['mentor', 'investor'], required: true },
+  message: { type: String, required: true },
+  details: { type: mongoose.Schema.Types.Mixed, default: null },
+  startupName: { type: String, default: '' },
+  requesterEmail: { type: String, default: '' },
+  requesterName: { type: String, default: '' },
+  targetName: { type: String, default: '' },
+  status: { type: String, enum: ['pending', 'in_progress', 'completed', 'cancelled'], default: 'pending' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+connectionRequestSchema.index({ startupUserId: 1, createdAt: -1 });
+connectionRequestSchema.index({ targetType: 1, createdAt: -1 });
 
 // Profile Schema
 const profileSchema = new mongoose.Schema({
@@ -252,6 +271,247 @@ const Profile = mongoose.model('Profile', profileSchema);
 const Startup = mongoose.model('Startup', startupSchema);
 const UserNotification = mongoose.model('UserNotification', userNotificationSchema);
 const AdminNotification = mongoose.model('AdminNotification', adminNotificationSchema);
+const ConnectionRequest = mongoose.model('ConnectionRequest', connectionRequestSchema, 'requests');
+
+function serializeConnectionRequest(doc) {
+  return {
+    id: doc._id.toString(),
+    startupUserId: doc.startupUserId.toString(),
+    targetId: doc.targetId.toString(),
+    targetType: doc.targetType,
+    message: doc.message,
+    details: doc.details ?? null,
+    startupName: doc.startupName,
+    requesterEmail: doc.requesterEmail,
+    requesterName: doc.requesterName,
+    targetName: doc.targetName,
+    status: doc.status,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString()
+  };
+}
+
+async function notifyAdminsNewConnectionRequest(savedDoc, summaryLine) {
+  const admins = await Admin.find({});
+  const now = new Date();
+  const requestRef = savedDoc._id;
+  if (admins.length === 0) {
+    await new AdminNotification({
+      adminId: null,
+      message: summaryLine,
+      type: 'connection_request',
+      userId: savedDoc.startupUserId,
+      userName: savedDoc.requesterName || undefined,
+      userEmail: savedDoc.requesterEmail || undefined,
+      userRole: 'user',
+      time: 'Just now',
+      read: false,
+      connectionRequestId: requestRef,
+      createdAt: now,
+      updatedAt: now
+    }).save();
+    return;
+  }
+  await Promise.all(
+    admins.map((admin) =>
+      new AdminNotification({
+        adminId: admin._id,
+        message: summaryLine,
+        type: 'connection_request',
+        userId: savedDoc.startupUserId,
+        userName: savedDoc.requesterName || undefined,
+        userEmail: savedDoc.requesterEmail || undefined,
+        userRole: 'user',
+        time: 'Just now',
+        read: false,
+        connectionRequestId: requestRef,
+        createdAt: now,
+        updatedAt: now
+      }).save()
+    )
+  );
+}
+
+async function sendMentorSessionEmailOptional(mentorDoc, details) {
+  const {
+    startupName,
+    topic,
+    preferredTimeSlot,
+    additionalNotes,
+    requesterEmail,
+    requesterName
+  } = details || {};
+  const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+  if (!smtpUser) {
+    console.log('Mentor request email skipped (SMTP not configured).');
+    return { emailSent: false, emailLogged: true };
+  }
+
+  const topicDisplayNames = {
+    'business-strategy': 'Business Strategy',
+    'product-development': 'Product Development',
+    marketing: 'Marketing & Growth',
+    fundraising: 'Fundraising',
+    operations: 'Operations',
+    leadership: 'Leadership'
+  };
+  const timeSlotDisplayNames = {
+    morning: 'Morning (9 AM - 12 PM)',
+    afternoon: 'Afternoon (12 PM - 5 PM)',
+    evening: 'Evening (5 PM - 8 PM)',
+    flexible: 'Flexible'
+  };
+  const topicDisplay = topicDisplayNames[topic] || topic || '';
+  const timeSlotDisplay = timeSlotDisplayNames[preferredTimeSlot] || preferredTimeSlot || '';
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER || process.env.EMAIL_USER,
+      pass: process.env.SMTP_PASS || process.env.EMAIL_PASSWORD
+    }
+  });
+
+  const emailSubject = `Mentoring Session Request from ${startupName || 'Startup'}`;
+  const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #06b6d4;">New Mentoring Session Request</h2>
+        <p>Hello ${mentorDoc.name},</p>
+        <p>You have received a new mentoring session request:</p>
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="color: #1f2937; margin-top: 0;">Session Details</h3>
+          <p><strong>Startup Name:</strong> ${startupName || '—'}</p>
+          <p><strong>Topic:</strong> ${topicDisplay}</p>
+          <p><strong>Preferred Time Slot:</strong> ${timeSlotDisplay}</p>
+          ${requesterName ? `<p><strong>Requested By:</strong> ${requesterName}</p>` : ''}
+          ${requesterEmail ? `<p><strong>Contact Email:</strong> ${requesterEmail}</p>` : ''}
+          ${additionalNotes ? `<p><strong>Additional Notes:</strong><br>${String(additionalNotes).replace(/\n/g, '<br>')}</p>` : ''}
+        </div>
+        <p>Please review this request and respond to ${requesterEmail || 'the requester'} at your earliest convenience.</p>
+        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">This is an automated message from the CITBIF Dashboard.</p>
+      </div>
+    `;
+  const emailText = `
+New Mentoring Session Request
+Hello ${mentorDoc.name},
+Startup: ${startupName || '—'}
+Topic: ${topicDisplay}
+Time: ${timeSlotDisplay}
+${requesterName ? `Requested By: ${requesterName}` : ''}
+${requesterEmail ? `Contact: ${requesterEmail}` : ''}
+${additionalNotes ? `Notes: ${additionalNotes}` : ''}
+`.trim();
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.EMAIL_USER || 'noreply@citbif.com',
+    to: mentorDoc.email,
+    subject: emailSubject,
+    text: emailText,
+    html: emailHtml
+  });
+  return { emailSent: true, emailLogged: false };
+}
+
+function buildAdminConnectionSummary({ targetType, startupName, requesterName, targetName, details }) {
+  const venture = (startupName || requesterName || 'Startup').trim() || 'Startup';
+  const contact = (targetName || 'Unknown').trim() || 'Unknown';
+
+  if (targetType === 'investor') {
+    const firmRaw =
+      details && typeof details.investorFirm === 'string' ? details.investorFirm.trim() : '';
+    const investorLabel = firmRaw ? `${contact} (${firmRaw})` : contact;
+    return `Introduction request · ${venture} · Requested investor: ${investorLabel}`;
+  }
+
+  const topicDisplayNames = {
+    'business-strategy': 'Business Strategy',
+    'product-development': 'Product Development',
+    marketing: 'Marketing & Growth',
+    fundraising: 'Fundraising',
+    operations: 'Operations',
+    leadership: 'Leadership'
+  };
+  const timeSlotDisplayNames = {
+    morning: 'Morning (9 AM–12 PM)',
+    afternoon: 'Afternoon (12 PM–5 PM)',
+    evening: 'Evening (5 PM–8 PM)',
+    flexible: 'Flexible'
+  };
+
+  const topic =
+    details && typeof details.topic === 'string'
+      ? topicDisplayNames[details.topic] || details.topic
+      : null;
+  const slot =
+    details && typeof details.preferredTimeSlot === 'string'
+      ? timeSlotDisplayNames[details.preferredTimeSlot] || details.preferredTimeSlot
+      : null;
+
+  const parts = [`Mentoring session · ${venture} · ${contact}`];
+  if (topic) parts.push(topic);
+  if (slot) parts.push(slot);
+  return parts.join(' · ');
+}
+
+async function persistConnectionRequest(payload) {
+  const {
+    startupUserId,
+    targetId,
+    targetType,
+    message,
+    details,
+    startupName,
+    requesterEmail,
+    requesterName,
+    targetName
+  } = payload;
+
+  const reqDoc = new ConnectionRequest({
+    startupUserId,
+    targetId,
+    targetType,
+    message,
+    details: details ?? null,
+    startupName: startupName || '',
+    requesterEmail: requesterEmail || '',
+    requesterName: requesterName || '',
+    targetName: targetName || '',
+    status: 'pending',
+    updatedAt: new Date()
+  });
+  await reqDoc.save();
+
+  const summary = buildAdminConnectionSummary({
+    targetType,
+    startupName,
+    requesterName,
+    targetName,
+    details
+  });
+  await notifyAdminsNewConnectionRequest(reqDoc, summary);
+
+  if (targetType === 'mentor') {
+    const mentorDoc = await Mentor.findById(targetId);
+    if (mentorDoc) {
+      try {
+        await sendMentorSessionEmailOptional(mentorDoc, {
+          startupName: details?.startupName || startupName,
+          topic: details?.topic,
+          preferredTimeSlot: details?.preferredTimeSlot,
+          additionalNotes: details?.additionalNotes,
+          requesterEmail,
+          requesterName
+        });
+      } catch (emailErr) {
+        console.error('Optional mentor email failed:', emailErr.message);
+      }
+    }
+  }
+
+  return reqDoc;
+}
 
 /**
  * When a founder updates their Profile, mirror listing fields on the linked Startup
@@ -448,22 +708,34 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const { emailOrUsername, password } = req.body;
 
+    const idTrim = typeof emailOrUsername === 'string' ? emailOrUsername.trim() : '';
+    const passTrim = typeof password === 'string' ? password.trim() : '';
+
     // Validation
-    if (!emailOrUsername || !password) {
+    if (!idTrim || !passTrim) {
       return res.status(400).json({ error: 'Email/username and password are required' });
     }
 
+    const adminOrConditions = [{ username: idTrim }];
+    if (idTrim.includes('@')) {
+      adminOrConditions.push({ email: new RegExp(`^${idTrim.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+    } else {
+      adminOrConditions.push({ email: idTrim });
+    }
+
     // Try to find user in Admin collection first
-    let foundUser = await Admin.findOne({
-      $or: [{ email: emailOrUsername }, { username: emailOrUsername }]
-    });
+    let foundUser = await Admin.findOne({ $or: adminOrConditions });
     let userRole = 'admin';
 
     // If not found in Admin, try User collection
     if (!foundUser) {
-      foundUser = await User.findOne({
-        $or: [{ email: emailOrUsername }, { username: emailOrUsername }]
-      });
+      const userOrConditions = [{ username: idTrim }];
+      if (idTrim.includes('@')) {
+        userOrConditions.push({ email: new RegExp(`^${idTrim.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') });
+      } else {
+        userOrConditions.push({ email: idTrim });
+      }
+      foundUser = await User.findOne({ $or: userOrConditions });
       userRole = 'user';
     }
 
@@ -473,7 +745,7 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     // Compare password
-    const isPasswordValid = await bcrypt.compare(password, foundUser.password);
+    const isPasswordValid = await bcrypt.compare(passTrim, foundUser.password);
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid username/password' });
     }
@@ -697,143 +969,216 @@ app.delete('/api/mentors/:id', async (req, res) => {
   }
 });
 
-// POST send mentor session request email
+// POST unified connection request (mentor or investor) — persists first, then optional mentor email
+app.post('/api/requests', async (req, res) => {
+  try {
+    const { startupUserId, targetId, targetType, message, details, startupName, requesterEmail, requesterName } = req.body;
+
+    if (!startupUserId || !targetId || !targetType || !message || typeof message !== 'string' || !message.trim()) {
+      return res.status(400).json({ error: 'startupUserId, targetId, targetType, and message are required' });
+    }
+    if (targetType !== 'mentor' && targetType !== 'investor') {
+      return res.status(400).json({ error: 'targetType must be mentor or investor' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(startupUserId) || !mongoose.Types.ObjectId.isValid(targetId)) {
+      return res.status(400).json({ error: 'Invalid id format' });
+    }
+
+    const userDoc = await User.findById(startupUserId);
+    if (!userDoc) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    let targetName = '';
+    if (targetType === 'mentor') {
+      const mentor = await Mentor.findById(targetId);
+      if (!mentor) {
+        return res.status(404).json({ error: 'Mentor not found' });
+      }
+      targetName = mentor.name;
+    } else {
+      const investor = await Investor.findById(targetId);
+      if (!investor) {
+        return res.status(404).json({ error: 'Investor not found' });
+      }
+      targetName = investor.name;
+    }
+
+    const saved = await persistConnectionRequest({
+      startupUserId: userDoc._id,
+      targetId: new mongoose.Types.ObjectId(targetId),
+      targetType,
+      message: message.trim(),
+      details: details ?? null,
+      startupName: startupName || '',
+      requesterEmail: requesterEmail || userDoc.email,
+      requesterName: requesterName || userDoc.fullName,
+      targetName
+    });
+
+    res.status(201).json({
+      message: 'Request recorded successfully',
+      request: serializeConnectionRequest(saved)
+    });
+  } catch (error) {
+    console.error('Error creating connection request:', error);
+    res.status(500).json({ error: 'Server error while creating request' });
+  }
+});
+
+// GET connection requests for a startup user (history)
+app.get('/api/requests/user/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    const list = await ConnectionRequest.find({ startupUserId: userId }).sort({ createdAt: -1 }).limit(200);
+    res.status(200).json(list.map(serializeConnectionRequest));
+  } catch (error) {
+    console.error('Error listing user requests:', error);
+    res.status(500).json({ error: 'Server error while fetching requests' });
+  }
+});
+
+// GET all connection requests (admin)
+app.get('/api/requests/admin', async (req, res) => {
+  try {
+    const list = await ConnectionRequest.find().sort({ createdAt: -1 }).limit(500);
+    res.status(200).json(list.map(serializeConnectionRequest));
+  } catch (error) {
+    console.error('Error listing admin requests:', error);
+    res.status(500).json({ error: 'Server error while fetching requests' });
+  }
+});
+
+// GET one connection request (e.g. admin notification detail)
+app.get('/api/requests/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid request ID' });
+    }
+    const doc = await ConnectionRequest.findById(id);
+    if (!doc) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    res.status(200).json(serializeConnectionRequest(doc));
+  } catch (error) {
+    console.error('Error fetching connection request:', error);
+    res.status(500).json({ error: 'Server error while fetching request' });
+  }
+});
+
+// PATCH request status (admin)
+app.patch('/api/requests/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const allowed = ['pending', 'in_progress', 'completed', 'cancelled'];
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid request ID' });
+    }
+    if (!status || !allowed.includes(status)) {
+      return res.status(400).json({ error: 'Valid status is required' });
+    }
+    const doc = await ConnectionRequest.findByIdAndUpdate(
+      id,
+      { status, updatedAt: new Date() },
+      { new: true }
+    );
+    if (!doc) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+    res.status(200).json(serializeConnectionRequest(doc));
+  } catch (error) {
+    console.error('Error updating request status:', error);
+    res.status(500).json({ error: 'Server error while updating request' });
+  }
+});
+
+// Legacy: mentor session — same as POST /api/requests with mentor resolved by email (requires startupUserId)
 app.post('/api/mentors/request-session', async (req, res) => {
   try {
-    const { mentorEmail, startupName, topic, preferredTimeSlot, additionalNotes, requesterEmail, requesterName } = req.body;
+    const {
+      mentorEmail,
+      startupName,
+      topic,
+      preferredTimeSlot,
+      additionalNotes,
+      requesterEmail,
+      requesterName,
+      startupUserId
+    } = req.body;
 
-    // Validation
+    if (!startupUserId) {
+      return res.status(400).json({ error: 'startupUserId is required' });
+    }
     if (!mentorEmail || !startupName || !topic || !preferredTimeSlot) {
       return res.status(400).json({ error: 'Mentor email, startup name, topic, and preferred time slot are required' });
     }
+    if (!mongoose.Types.ObjectId.isValid(startupUserId)) {
+      return res.status(400).json({ error: 'Invalid startup user ID' });
+    }
 
-    // Find mentor to get their name
+    const userDoc = await User.findById(startupUserId);
+    if (!userDoc) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
     const mentor = await Mentor.findOne({ email: mentorEmail });
     if (!mentor) {
       return res.status(404).json({ error: 'Mentor not found' });
     }
 
-    // Configure nodemailer transporter
-    // For production, use environment variables for email credentials
-    // For development/testing, you can use a service like Gmail, SendGrid, or Mailtrap
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER || process.env.EMAIL_USER,
-        pass: process.env.SMTP_PASS || process.env.EMAIL_PASSWORD,
-      },
-    });
-
-    // If no email credentials are configured, return a helpful error
-    if (!process.env.SMTP_USER && !process.env.EMAIL_USER) {
-      console.warn('Email credentials not configured. Please set SMTP_USER and SMTP_PASS environment variables.');
-      // For development, you can still return success but log the email content
-      console.log('Email would be sent with the following content:');
-      console.log('To:', mentorEmail);
-      console.log('Subject: Mentoring Session Request from', startupName);
-      console.log('Body:', {
-        startupName,
-        topic,
-        preferredTimeSlot,
-        additionalNotes,
-        requesterEmail,
-        requesterName
-      });
-      
-      return res.status(200).json({ 
-        message: 'Session request logged (email not configured). Please configure SMTP settings for production.',
-        logged: true
-      });
-    }
-
-    // Format topic display name
     const topicDisplayNames = {
       'business-strategy': 'Business Strategy',
       'product-development': 'Product Development',
-      'marketing': 'Marketing & Growth',
-      'fundraising': 'Fundraising',
-      'operations': 'Operations',
-      'leadership': 'Leadership'
+      marketing: 'Marketing & Growth',
+      fundraising: 'Fundraising',
+      operations: 'Operations',
+      leadership: 'Leadership'
     };
-
-    const topicDisplay = topicDisplayNames[topic] || topic;
-
-    // Format time slot display name
     const timeSlotDisplayNames = {
-      'morning': 'Morning (9 AM - 12 PM)',
-      'afternoon': 'Afternoon (12 PM - 5 PM)',
-      'evening': 'Evening (5 PM - 8 PM)',
-      'flexible': 'Flexible'
+      morning: 'Morning (9 AM - 12 PM)',
+      afternoon: 'Afternoon (12 PM - 5 PM)',
+      evening: 'Evening (5 PM - 8 PM)',
+      flexible: 'Flexible'
     };
-
+    const topicDisplay = topicDisplayNames[topic] || topic;
     const timeSlotDisplay = timeSlotDisplayNames[preferredTimeSlot] || preferredTimeSlot;
-
-    // Email content
-    const emailSubject = `Mentoring Session Request from ${startupName}`;
-    const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #06b6d4;">New Mentoring Session Request</h2>
-        <p>Hello ${mentor.name},</p>
-        <p>You have received a new mentoring session request:</p>
-        
-        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="color: #1f2937; margin-top: 0;">Session Details</h3>
-          <p><strong>Startup Name:</strong> ${startupName}</p>
-          <p><strong>Topic:</strong> ${topicDisplay}</p>
-          <p><strong>Preferred Time Slot:</strong> ${timeSlotDisplay}</p>
-          ${requesterName ? `<p><strong>Requested By:</strong> ${requesterName}</p>` : ''}
-          ${requesterEmail ? `<p><strong>Contact Email:</strong> ${requesterEmail}</p>` : ''}
-          ${additionalNotes ? `<p><strong>Additional Notes:</strong><br>${additionalNotes.replace(/\n/g, '<br>')}</p>` : ''}
-        </div>
-        
-        <p>Please review this request and respond to ${requesterEmail || 'the requester'} at your earliest convenience.</p>
-        
-        <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
-          This is an automated message from the CITBIF Dashboard.
-        </p>
-      </div>
-    `;
-
-    const emailText = `
-New Mentoring Session Request
-
-Hello ${mentor.name},
-
-You have received a new mentoring session request:
-
-Session Details:
-- Startup Name: ${startupName}
-- Topic: ${topicDisplay}
-- Preferred Time Slot: ${timeSlotDisplay}
-${requesterName ? `- Requested By: ${requesterName}` : ''}
-${requesterEmail ? `- Contact Email: ${requesterEmail}` : ''}
-${additionalNotes ? `- Additional Notes:\n${additionalNotes}` : ''}
-
-Please review this request and respond to ${requesterEmail || 'the requester'} at your earliest convenience.
-
-This is an automated message from the CITBIF Dashboard.
-    `;
-
-    // Send email
-    const mailOptions = {
-      from: process.env.SMTP_FROM || process.env.EMAIL_USER || 'noreply@citbif.com',
-      to: mentorEmail,
-      subject: emailSubject,
-      text: emailText,
-      html: emailHtml,
+    const message = `Mentoring session · ${topicDisplay} · ${timeSlotDisplay}`;
+    const details = {
+      topic,
+      preferredTimeSlot,
+      additionalNotes: additionalNotes || '',
+      startupName
     };
 
-    await transporter.sendMail(mailOptions);
+    const saved = await persistConnectionRequest({
+      startupUserId: userDoc._id,
+      targetId: mentor._id,
+      targetType: 'mentor',
+      message,
+      details,
+      startupName,
+      requesterEmail: requesterEmail || userDoc.email,
+      requesterName: requesterName || userDoc.fullName,
+      targetName: mentor.name
+    });
 
-    res.status(200).json({ 
-      message: 'Session request email sent successfully',
-      sent: true
+    const smtpOk = !!(process.env.SMTP_USER || process.env.EMAIL_USER);
+    res.status(200).json({
+      message: smtpOk
+        ? 'Request recorded and mentor notified by email when SMTP is configured.'
+        : 'Request recorded. Configure SMTP to email the mentor automatically.',
+      request: serializeConnectionRequest(saved),
+      sent: smtpOk,
+      logged: !smtpOk
     });
   } catch (error) {
-    console.error('Error sending mentor session request email:', error);
-    res.status(500).json({ error: 'Server error while sending email: ' + error.message });
+    console.error('Error in mentor request-session:', error);
+    res.status(500).json({ error: 'Server error while processing mentor request' });
   }
 });
 
@@ -1168,9 +1513,63 @@ app.get('/api/investors/:id', async (req, res) => {
   }
 });
 
-// POST create investor — disabled (add-via-UI removed; seed or migrate in DB if needed)
+// POST create investor
 app.post('/api/investors', async (req, res) => {
-  res.status(403).json({ error: 'Creating new investors through the API is disabled.' });
+  try {
+    const { name, firm, email, phoneNumber, investmentRange, focusAreas, backgroundSummary, profilePicture } =
+      req.body;
+
+    if (!name || !firm || !email || !investmentRange || !backgroundSummary) {
+      return res
+        .status(400)
+        .json({ error: 'Name, firm, email, investment range, and background summary are required' });
+    }
+
+    const existingInvestor = await Investor.findOne({ email });
+    if (existingInvestor) {
+      return res.status(400).json({ error: 'An investor with this email already exists' });
+    }
+
+    const newInvestor = new Investor({
+      name,
+      firm,
+      email,
+      phoneNumber: phoneNumber || '',
+      investmentRange,
+      focusAreas: Array.isArray(focusAreas) ? focusAreas : [],
+      backgroundSummary,
+      profilePicture: profilePicture || '',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+
+    await newInvestor.save();
+
+    await notifyApprovedStartupUsers(
+      `A new investor was added to the directory: ${newInvestor.name} (${newInvestor.firm}). Open Investors to view or request an introduction.`,
+      'investor'
+    );
+
+    res.status(201).json({
+      id: newInvestor._id.toString(),
+      name: newInvestor.name,
+      firm: newInvestor.firm,
+      email: newInvestor.email,
+      phoneNumber: newInvestor.phoneNumber,
+      investmentRange: newInvestor.investmentRange,
+      focusAreas: newInvestor.focusAreas,
+      backgroundSummary: newInvestor.backgroundSummary,
+      profilePicture: newInvestor.profilePicture,
+      createdAt: newInvestor.createdAt.toISOString(),
+      updatedAt: newInvestor.updatedAt.toISOString()
+    });
+  } catch (error) {
+    console.error('Error creating investor:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ error: 'An investor with this email already exists' });
+    }
+    res.status(500).json({ error: 'Server error while creating investor' });
+  }
 });
 
 // PUT update investor
@@ -2055,6 +2454,93 @@ app.get('/api/profiles/user/:userId', async (req, res) => {
   }
 });
 
+// GET profile by startup ID (admin data room — same user resolution as /api/documents/startup)
+app.get('/api/profiles/startup/:startupId', async (req, res) => {
+  try {
+    const { startupId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(startupId)) {
+      return res.status(400).json({ error: 'Invalid startup ID format' });
+    }
+
+    const startup = await Startup.findById(startupId);
+    if (!startup) {
+      return res.status(404).json({ error: 'Startup not found' });
+    }
+
+    let resolvedUserId = null;
+    if (startup.userId) {
+      resolvedUserId =
+        typeof startup.userId === 'object' && startup.userId._id
+          ? startup.userId._id
+          : startup.userId;
+    }
+    if (!resolvedUserId && startup.email) {
+      const u = await User.findOne({ email: startup.email });
+      if (u) resolvedUserId = u._id;
+    }
+    if (!resolvedUserId) {
+      return res.status(404).json({ error: 'No user linked to this startup' });
+    }
+
+    const userIdStr = resolvedUserId.toString();
+    let profile;
+    try {
+      const userObjectId = new mongoose.Types.ObjectId(userIdStr);
+      profile = await Profile.findOne({ userId: userObjectId });
+      if (!profile) {
+        profile = await Profile.findOne({ userId: userIdStr });
+      }
+    } catch (objectIdError) {
+      profile = await Profile.findOne({ userId: userIdStr });
+    }
+
+    if (!profile) {
+      return res.status(404).json({ error: 'Profile not found for this startup' });
+    }
+
+    res.status(200).json({
+      id: profile._id.toString(),
+      userId: profile.userId.toString(),
+      fullName: profile.fullName,
+      email: profile.email,
+      phoneNumber: profile.phoneNumber,
+      location: profile.location,
+      startupName: profile.startupName,
+      entityType: profile.entityType,
+      applicationType: profile.applicationType,
+      founderName: profile.founderName,
+      coFounderNames: profile.coFounderNames,
+      sector: profile.sector,
+      linkedinProfile: profile.linkedinProfile,
+      previouslyIncubated: profile.previouslyIncubated,
+      incubatorName: profile.incubatorName,
+      incubatorLocation: profile.incubatorLocation,
+      incubationDuration: profile.incubationDuration,
+      incubatorType: profile.incubatorType,
+      incubationMode: profile.incubationMode,
+      supportsReceived: profile.supportsReceived,
+      aadhaarDoc: profile.aadhaarDoc,
+      incorporationCert: profile.incorporationCert,
+      msmeCert: profile.msmeCert,
+      dpiitCert: profile.dpiitCert,
+      mouPartnership: profile.mouPartnership,
+      businessDocuments: profile.businessDocuments,
+      tractionDetails: profile.tractionDetails,
+      balanceSheet: profile.balanceSheet,
+      fundingStage: profile.fundingStage,
+      alreadyFunded: profile.alreadyFunded,
+      fundingAmount: profile.fundingAmount,
+      fundingSource: profile.fundingSource,
+      fundingDate: profile.fundingDate,
+      createdAt: profile.createdAt.toISOString(),
+      updatedAt: profile.updatedAt.toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching profile by startup:', error);
+    res.status(500).json({ error: 'Server error while fetching profile' });
+  }
+});
+
 // POST create/update profile
 app.post('/api/profiles', async (req, res) => {
   try {
@@ -2622,7 +3108,7 @@ app.get('/api/notifications/admin/:adminId', async (req, res) => {
       ]
     })
       .sort({ createdAt: -1 })
-      .limit(50)
+      .limit(200)
       .populate('userId', 'fullName email')
       .populate('adminId', 'fullName email');
 
@@ -2636,6 +3122,9 @@ app.get('/api/notifications/admin/:adminId', async (req, res) => {
       userRole: notification.userRole,
       time: notification.time || 'Just now',
       read: notification.read,
+      connectionRequestId: notification.connectionRequestId
+        ? notification.connectionRequestId.toString()
+        : null,
       createdAt: notification.createdAt.toISOString(),
       updatedAt: notification.updatedAt.toISOString()
     }));

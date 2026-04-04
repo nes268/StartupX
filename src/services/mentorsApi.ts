@@ -66,25 +66,6 @@ class MentorsApi {
       throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
   }
-
-  async requestSession(data: {
-    mentorEmail: string;
-    startupName: string;
-    topic: string;
-    preferredTimeSlot: string;
-    additionalNotes?: string;
-    requesterEmail?: string;
-    requesterName?: string;
-  }): Promise<{ message: string; sent?: boolean; logged?: boolean }> {
-    const response = await fetch(`${API_URL}/api/mentors/request-session`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    return this.handleResponse<{ message: string; sent?: boolean; logged?: boolean }>(response);
-  }
 }
 
 export const mentorsApi = new MentorsApi();

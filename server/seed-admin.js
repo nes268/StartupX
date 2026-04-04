@@ -18,37 +18,40 @@ const adminSchema = new mongoose.Schema({
 
 const Admin = mongoose.model('Admin', adminSchema);
 
+const DEFAULT_EMAIL = 'admin@gmail.com';
+const DEFAULT_USERNAME = 'admin';
+const DEFAULT_PASSWORD = 'admin123';
+
 async function seedAdmin() {
   try {
     console.log('Connecting to MongoDB...');
     await mongoose.connect(MONGODB_URI);
     console.log('✅ Connected to MongoDB');
 
-    // Check if admin already exists
-    const existingAdmin = await Admin.findOne({
-      $or: [
-        { email: 'admin@gmail.com' },
-        { username: 'admin' }
-      ]
-    });
+    const hashedPassword = await bcrypt.hash(DEFAULT_PASSWORD, 10);
+
+    let existingAdmin =
+      (await Admin.findOne({ email: new RegExp(`^${DEFAULT_EMAIL}$`, 'i') })) ||
+      (await Admin.findOne({ username: DEFAULT_USERNAME }));
 
     if (existingAdmin) {
-      console.log('⚠️  Admin user already exists:');
-      console.log(`   Email: ${existingAdmin.email}`);
-      console.log(`   Username: ${existingAdmin.username}`);
-      console.log(`   Full Name: ${existingAdmin.fullName}`);
+      existingAdmin.password = hashedPassword;
+      existingAdmin.email = DEFAULT_EMAIL;
+      existingAdmin.username = DEFAULT_USERNAME;
+      await existingAdmin.save();
+      console.log('✅ Admin account updated (password reset to default).');
+      console.log('\n📋 Admin Credentials:');
+      console.log(`   Email: ${DEFAULT_EMAIL}`);
+      console.log(`   Username: ${DEFAULT_USERNAME}`);
+      console.log(`   Password: ${DEFAULT_PASSWORD}`);
       await mongoose.connection.close();
       process.exit(0);
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash('admin123', 10);
-
-    // Create default admin
     const admin = new Admin({
       fullName: 'Administrator',
-      email: 'admin@gmail.com',
-      username: 'admin',
+      email: DEFAULT_EMAIL,
+      username: DEFAULT_USERNAME,
       password: hashedPassword,
       profileComplete: false
     });
@@ -57,9 +60,9 @@ async function seedAdmin() {
 
     console.log('✅ Default admin user created successfully!');
     console.log('\n📋 Admin Credentials:');
-    console.log('   Email: admin@gmail.com');
-    console.log('   Username: admin');
-    console.log('   Password: admin123');
+    console.log(`   Email: ${DEFAULT_EMAIL}`);
+    console.log(`   Username: ${DEFAULT_USERNAME}`);
+    console.log(`   Password: ${DEFAULT_PASSWORD}`);
     console.log('   Full Name: Administrator');
 
     await mongoose.connection.close();

@@ -29,7 +29,10 @@ const Login: React.FC = () => {
     }
 
     try {
-      const user = await login(formData.emailOrUsername, formData.password);
+      const user = await login(
+        formData.emailOrUsername.trim(),
+        formData.password.trim()
+      );
       if (user.role === 'admin') {
         navigate('/admin/dashboard');
       } else {

@@ -3,7 +3,9 @@ import Card from '../../ui/Card';
 import { ModalPortal } from '../../ui/ModalPortal';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { useNotifications } from '../../../context/NotificationsContext';
+import { useNotifications, AdminNotification } from '../../../context/NotificationsContext';
+import { connectionRequestsApi } from '../../../services/connectionRequestsApi';
+import { ConnectionRequest } from '../../../types';
 import { useStartups } from '../../../hooks/useStartups';
 import { 
   Building2, 
@@ -24,13 +26,109 @@ import {
 } from 'lucide-react';
 import { Startup } from '../../../types';
 
+const MENTOR_TOPIC_LABELS: Record<string, string> = {
+  'business-strategy': 'Business Strategy',
+  'product-development': 'Product Development',
+  marketing: 'Marketing & Growth',
+  fundraising: 'Fundraising',
+  operations: 'Operations',
+  leadership: 'Leadership',
+};
+
+const MENTOR_SLOT_LABELS: Record<string, string> = {
+  morning: 'Morning (9 AM – 12 PM)',
+  afternoon: 'Afternoon (12 PM – 5 PM)',
+  evening: 'Evening (5 PM – 8 PM)',
+  flexible: 'Flexible',
+};
+
+const REQUEST_STATUS_LABELS: Record<string, string> = {
+  pending: 'Pending',
+  in_progress: 'In progress',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
+interface AdminNotificationRowProps {
+  notification: AdminNotification;
+  onRowClick: (n: AdminNotification) => void | Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}
+
+const AdminNotificationRow: React.FC<AdminNotificationRowProps> = ({
+  notification,
+  onRowClick,
+  onDelete,
+}) => (
+  <div
+    className={`flex items-start space-x-2 p-2.5 rounded-lg transition-colors cursor-pointer ${
+      notification.read
+        ? 'bg-[var(--bg-muted)]'
+        : 'bg-[var(--accent-muted)]/60 border border-[var(--accent-muted-border)]'
+    }`}
+    onClick={() => void onRowClick(notification)}
+  >
+    <div
+      className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+        notification.type === 'signup'
+          ? 'bg-emerald-500'
+          : notification.type === 'application'
+            ? 'bg-blue-500'
+            : notification.type === 'review'
+              ? 'bg-yellow-500'
+              : notification.type === 'feedback'
+                ? 'bg-purple-500'
+                : notification.type === 'milestone'
+                  ? 'bg-[var(--accent)]'
+                  : notification.type === 'connection_request'
+                    ? 'bg-cyan-500'
+                    : notification.type === 'info'
+                      ? 'bg-gray-500'
+                      : 'bg-gray-500'
+      }`}
+    />
+    <div className="flex-1 min-w-0">
+      <div className="flex items-start justify-between gap-2">
+        <p
+          className={`text-sm flex-1 ${notification.read ? 'text-[var(--text-muted)]' : 'text-[var(--text)] font-medium'}`}
+        >
+          {notification.type === 'signup' && notification.read !== true && (
+            <span className="inline-block mr-2 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded">
+              New Applicant
+            </span>
+          )}
+          {notification.message}
+        </p>
+      </div>
+      <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+      {notification.userName && notification.userEmail && (
+        <p className="text-xs text-[var(--text-muted)] mt-1">
+          {notification.userName} • {notification.userEmail}
+        </p>
+      )}
+    </div>
+    <button
+      type="button"
+      onClick={async (e) => {
+        e.stopPropagation();
+        await onDelete(notification.id);
+      }}
+      className="text-gray-500 hover:text-red-600 transition-colors p-1 flex-shrink-0"
+      title="Delete notification"
+    >
+      <Trash2 className="h-4 w-4" />
+    </button>
+  </div>
+);
+
 const AdminOverview: React.FC = () => {
-  const { 
-    getRecentNotifications, 
-    getUnreadCount, 
-    markAsRead, 
+  const {
+    notifications: allNotifications,
+    getUnreadCount,
+    markAsRead,
+    markAllAsRead,
     deleteNotification,
-    refreshNotifications
+    refreshNotifications,
   } = useNotifications();
   
   const { startups, loading, error, refreshStartups, updateStartup } = useStartups();
@@ -68,6 +166,43 @@ const AdminOverview: React.FC = () => {
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [hoveredSector, setHoveredSector] = useState<{ sector: string; percentage: number; count: number } | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+
+  const [connectionDetailOpen, setConnectionDetailOpen] = useState(false);
+  const [connectionDetailLoading, setConnectionDetailLoading] = useState(false);
+  const [connectionDetailError, setConnectionDetailError] = useState<string | null>(null);
+  const [connectionDetailRequest, setConnectionDetailRequest] = useState<ConnectionRequest | null>(null);
+  const [notificationsHistoryOpen, setNotificationsHistoryOpen] = useState(false);
+
+  const closeConnectionDetailModal = () => {
+    setConnectionDetailOpen(false);
+    setConnectionDetailLoading(false);
+    setConnectionDetailError(null);
+    setConnectionDetailRequest(null);
+  };
+
+  const openConnectionRequestFromNotification = async (notification: AdminNotification) => {
+    if (notification.type === 'connection_request' && notification.connectionRequestId) {
+      setConnectionDetailOpen(true);
+      setConnectionDetailLoading(true);
+      setConnectionDetailError(null);
+      setConnectionDetailRequest(null);
+      try {
+        const req = await connectionRequestsApi.getById(notification.connectionRequestId);
+        setConnectionDetailRequest(req);
+        if (!notification.read) {
+          await markAsRead(notification.id);
+        }
+      } catch (e) {
+        setConnectionDetailError(e instanceof Error ? e.message : 'Could not load request details.');
+      } finally {
+        setConnectionDetailLoading(false);
+      }
+      return;
+    }
+    if (!notification.read) {
+      void markAsRead(notification.id);
+    }
+  };
 
   // Calculate metrics from real data - only count approved/active startups
   const metrics = useMemo(() => {
@@ -277,8 +412,14 @@ const AdminOverview: React.FC = () => {
     );
   };
 
-  // Get dynamic notifications
-  const notifications = getRecentNotifications(5);
+  const sortedNotifications = useMemo(
+    () =>
+      [...allNotifications].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [allNotifications]
+  );
+  const recentNotifications = useMemo(() => sortedNotifications.slice(0, 5), [sortedNotifications]);
   const unreadCount = getUnreadCount();
 
   // Calculate pie chart data - total startups across all sectors
@@ -520,18 +661,31 @@ const AdminOverview: React.FC = () => {
 
         {/* Recent Notifications - Right */}
         <Card className="p-6 flex flex-col" style={{ maxHeight: '500px' }}>
-          <div className="flex items-center justify-between mb-4 flex-shrink-0">
-            <h2 className="text-xl font-semibold text-[var(--text)] flex items-center">
-              <Bell className="h-5 w-5 mr-2" />
-              Recent Notifications
-              {unreadCount > 0 && (
-                <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                  {unreadCount}
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => setNotificationsHistoryOpen(true)}
+              className="text-xl font-semibold text-[var(--text)] flex items-center gap-2 rounded-xl px-1 py-0.5 -mx-1 hover:bg-[var(--bg-muted)]/80 transition-colors text-left"
+              title="View all notifications"
+            >
+              <Bell className="h-5 w-5 shrink-0" />
+              <span>Recent Notifications</span>
+              {unreadCount > 0 ? (
+                <span className="bg-red-500 text-white text-xs font-semibold min-w-[1.5rem] h-6 px-2 inline-flex items-center justify-center rounded-full tabular-nums">
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
-              )}
-            </h2>
-            <div className="flex items-center gap-3">
+              ) : null}
+            </button>
+            <div className="flex items-center gap-3 flex-wrap justify-end">
               <button
+                type="button"
+                onClick={() => setNotificationsHistoryOpen(true)}
+                className="text-xs font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+              >
+                View all
+              </button>
+              <button
+                type="button"
                 onClick={() => refreshNotifications()}
                 className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors"
                 title="Refresh notifications"
@@ -540,7 +694,8 @@ const AdminOverview: React.FC = () => {
               </button>
               {unreadCount > 0 && (
                 <button
-                  onClick={() => notifications.forEach(n => !n.read && markAsRead(n.id))}
+                  type="button"
+                  onClick={() => void markAllAsRead()}
                   className="text-xs text-[var(--accent)] hover:text-[var(--accent-hover)]"
                 >
                   Mark all as read
@@ -549,64 +704,226 @@ const AdminOverview: React.FC = () => {
             </div>
           </div>
           <div className="space-y-3 overflow-y-auto flex-1 pr-2" style={{ maxHeight: '380px' }}>
-            {notifications.length === 0 ? (
+            {recentNotifications.length === 0 ? (
               <div className="text-center py-8">
                 <Bell className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                 <h3 className="text-lg font-medium text-[var(--text-muted)] mb-2">No notifications</h3>
                 <p className="text-[var(--text-muted)]">Notifications will appear here when users sign up or other events occur</p>
               </div>
             ) : (
-              notifications.map((notification) => (
-                <div 
-                  key={notification.id} 
-                  className={`flex items-start space-x-2 p-2.5 rounded-lg transition-colors cursor-pointer ${
-                    notification.read ? 'bg-[var(--bg-muted)]' : 'bg-[var(--accent-muted)]/60 border border-[var(--accent-muted-border)]'
-                  }`}
-                  onClick={() => !notification.read && markAsRead(notification.id)}
-                >
-                  <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                    notification.type === 'signup' ? 'bg-emerald-500' :
-                    notification.type === 'application' ? 'bg-blue-500' :
-                    notification.type === 'review' ? 'bg-yellow-500' :
-                    notification.type === 'feedback' ? 'bg-purple-500' :
-                    notification.type === 'milestone' ? 'bg-[var(--accent)]' :
-                    notification.type === 'info' ? 'bg-gray-500' :
-                    'bg-gray-500'
-                  }`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm flex-1 ${notification.read ? 'text-[var(--text-muted)]' : 'text-[var(--text)] font-medium'}`}>
-                        {notification.type === 'signup' && !notification.read && (
-                          <span className="inline-block mr-2 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded">
-                            New Applicant
-                          </span>
-                        )}
-                        {notification.message}
-                      </p>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                    {notification.userName && notification.userEmail && (
-                      <p className="text-xs text-[var(--text-muted)] mt-1">
-                        {notification.userName} • {notification.userEmail}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await deleteNotification(notification.id);
-                    }}
-                    className="text-gray-500 hover:text-red-600 transition-colors p-1 flex-shrink-0"
-                    title="Delete notification"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+              recentNotifications.map((notification) => (
+                <AdminNotificationRow
+                  key={notification.id}
+                  notification={notification}
+                  onRowClick={(n) => void openConnectionRequestFromNotification(n)}
+                  onDelete={deleteNotification}
+                />
               ))
             )}
           </div>
         </Card>
       </div>
+
+      {/* Full notification history */}
+      {notificationsHistoryOpen && (
+        <ModalPortal onBackdropClick={() => setNotificationsHistoryOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <Card className="w-full max-w-xl max-h-[min(88dvh,720px)] overflow-hidden flex flex-col border border-[var(--border-muted)] shadow-[var(--shadow-card)]">
+              <div className="flex flex-wrap items-center justify-between gap-3 p-4 border-b border-[var(--border-muted)] shrink-0">
+                <div>
+                  <h2 className="text-lg font-semibold text-[var(--text)]">All notifications</h2>
+                  <p className="text-xs text-[var(--text-muted)] mt-0.5">
+                    {sortedNotifications.length} total
+                    {unreadCount > 0 ? ` · ${unreadCount} unread` : ''}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {unreadCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => void markAllAsRead()}
+                      className="text-xs font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => refreshNotifications()}
+                    className="text-xs text-[var(--text-muted)] hover:text-[var(--accent)]"
+                  >
+                    Refresh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNotificationsHistoryOpen(false)}
+                    className="p-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-muted)]"
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="p-4 overflow-y-auto flex-1 space-y-3 min-h-0">
+                {sortedNotifications.length === 0 ? (
+                  <div className="text-center py-12 text-[var(--text-muted)] text-sm">
+                    No notifications yet.
+                  </div>
+                ) : (
+                  sortedNotifications.map((notification) => (
+                    <AdminNotificationRow
+                      key={notification.id}
+                      notification={notification}
+                      onRowClick={async (n) => {
+                        await openConnectionRequestFromNotification(n);
+                      }}
+                      onDelete={deleteNotification}
+                    />
+                  ))
+                )}
+              </div>
+            </Card>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Connection request detail (from notification) */}
+      {connectionDetailOpen && (
+        <ModalPortal onBackdropClick={closeConnectionDetailModal}>
+          <div onClick={(e) => e.stopPropagation()}>
+          <Card className="w-full max-w-lg max-h-[min(90dvh,640px)] overflow-hidden flex flex-col border border-[var(--border-muted)] shadow-[var(--shadow-card)]">
+            <div className="flex items-start justify-between gap-3 p-5 border-b border-[var(--border-muted)] shrink-0">
+              <h2 className="text-lg font-semibold text-[var(--text)]">Request details</h2>
+              <button
+                type="button"
+                onClick={closeConnectionDetailModal}
+                className="p-2 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-muted)]"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto flex-1 text-sm">
+              {connectionDetailLoading && (
+                <div className="flex items-center gap-2 text-[var(--text-muted)] py-8 justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-[var(--accent)]" />
+                  Loading…
+                </div>
+              )}
+              {connectionDetailError && !connectionDetailLoading && (
+                <div className="flex items-start gap-2 text-red-600 py-4">
+                  <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+                  <span>{connectionDetailError}</span>
+                </div>
+              )}
+              {connectionDetailRequest && !connectionDetailLoading && (
+                <dl className="space-y-4">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Type</dt>
+                    <dd className="mt-1 text-[var(--text)] capitalize">{connectionDetailRequest.targetType}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Startup / venture</dt>
+                    <dd className="mt-1 text-[var(--text)]">{connectionDetailRequest.startupName || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                      {connectionDetailRequest.targetType === 'mentor' ? 'Mentor' : 'Investor'}
+                    </dt>
+                    <dd className="mt-1 text-[var(--text)]">{connectionDetailRequest.targetName || '—'}</dd>
+                  </div>
+                  {connectionDetailRequest.targetType === 'mentor' &&
+                    connectionDetailRequest.details &&
+                    typeof connectionDetailRequest.details === 'object' && (
+                      <>
+                        {typeof (connectionDetailRequest.details as { topic?: string }).topic === 'string' && (
+                          <div>
+                            <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Topic</dt>
+                            <dd className="mt-1 text-[var(--text)]">
+                              {MENTOR_TOPIC_LABELS[(connectionDetailRequest.details as { topic: string }).topic] ||
+                                (connectionDetailRequest.details as { topic: string }).topic}
+                            </dd>
+                          </div>
+                        )}
+                        {typeof (connectionDetailRequest.details as { preferredTimeSlot?: string }).preferredTimeSlot ===
+                          'string' && (
+                          <div>
+                            <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                              Preferred time
+                            </dt>
+                            <dd className="mt-1 text-[var(--text)]">
+                              {MENTOR_SLOT_LABELS[
+                                (connectionDetailRequest.details as { preferredTimeSlot: string }).preferredTimeSlot
+                              ] || (connectionDetailRequest.details as { preferredTimeSlot: string }).preferredTimeSlot}
+                            </dd>
+                          </div>
+                        )}
+                        {String((connectionDetailRequest.details as { additionalNotes?: string }).additionalNotes || '')
+                          .trim() && (
+                          <div>
+                            <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">
+                              Additional notes
+                            </dt>
+                            <dd className="mt-1 text-[var(--text-muted)] whitespace-pre-wrap">
+                              {(connectionDetailRequest.details as { additionalNotes: string }).additionalNotes}
+                            </dd>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  {connectionDetailRequest.targetType === 'investor' &&
+                    connectionDetailRequest.details &&
+                    typeof connectionDetailRequest.details === 'object' &&
+                    String((connectionDetailRequest.details as { investorFirm?: string }).investorFirm || '').trim() && (
+                      <div>
+                        <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Firm</dt>
+                        <dd className="mt-1 text-[var(--text)]">
+                          {(connectionDetailRequest.details as { investorFirm: string }).investorFirm}
+                        </dd>
+                      </div>
+                    )}
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Requested by</dt>
+                    <dd className="mt-1 text-[var(--text)]">
+                      {connectionDetailRequest.requesterName || '—'}
+                      {connectionDetailRequest.requesterEmail ? (
+                        <span className="block text-[var(--text-muted)] text-xs mt-0.5">
+                          {connectionDetailRequest.requesterEmail}
+                        </span>
+                      ) : null}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Summary</dt>
+                    <dd className="mt-1 text-[var(--text-muted)]">{connectionDetailRequest.message}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Status</dt>
+                    <dd className="mt-1 text-[var(--text)]">
+                      {REQUEST_STATUS_LABELS[connectionDetailRequest.status] || connectionDetailRequest.status}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--text-subtle)]">Submitted</dt>
+                    <dd className="mt-1 text-[var(--text-muted)]">
+                      {new Date(connectionDetailRequest.createdAt).toLocaleString(undefined, {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+            </div>
+            <div className="p-4 border-t border-[var(--border-muted)] shrink-0 flex justify-end bg-[var(--bg-muted)]/30">
+              <Button type="button" variant="secondary" size="sm" onClick={closeConnectionDetailModal}>
+                Close
+              </Button>
+            </div>
+          </Card>
+          </div>
+        </ModalPortal>
+      )}
 
       {/* Startups Modal */}
       {showModal && (

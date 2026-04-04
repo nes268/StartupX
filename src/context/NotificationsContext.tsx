@@ -5,11 +5,13 @@ export interface AdminNotification {
   id: string;
   message: string;
   time: string;
-  type: 'new' | 'info' | 'feedback' | 'review' | 'signup' | 'application' | 'milestone';
+  type: 'new' | 'info' | 'feedback' | 'review' | 'signup' | 'application' | 'milestone' | 'connection_request';
   userId?: string;
   userName?: string;
   userEmail?: string;
   userRole?: 'user' | 'admin';
+  /** Present for type connection_request — open full request payload in UI */
+  connectionRequestId?: string | null;
   createdAt: string;
   read: boolean;
 }
@@ -72,6 +74,17 @@ const formatRelativeTime = (dateString: string): string => {
   return `${diffInYears} year${diffInYears === 1 ? '' : 's'} ago`;
 };
 
+/** API must expose read as boolean; treat anything else as unread so counts stay accurate */
+function normalizeAdminNotificationFromApi(
+  notification: AdminNotification & { read?: unknown }
+): AdminNotification {
+  return {
+    ...notification,
+    read: notification.read === true,
+    time: notification.time || formatRelativeTime(notification.createdAt),
+  };
+}
+
 export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -91,12 +104,9 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
 
           if (response.ok) {
             const data = await response.json();
-            // Format time for each notification
-            const formattedNotifications = data.map((notification: AdminNotification) => ({
-              ...notification,
-              time: notification.time || formatRelativeTime(notification.createdAt)
-            }));
-            setNotifications(formattedNotifications);
+            setNotifications(
+              data.map((n: AdminNotification) => normalizeAdminNotificationFromApi(n))
+            );
           }
         } catch (error) {
           console.error('Error fetching admin notifications:', error);
@@ -155,18 +165,17 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
   };
 
   const markAllAsRead = async () => {
-    // Optimistically update UI
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+    let unreadIds: string[] = [];
+    setNotifications((prev) => {
+      unreadIds = prev.filter((n) => n.read !== true).map((n) => n.id);
+      return prev.map((notification) => ({ ...notification, read: true }));
+    });
 
-    // Update backend for each unread notification if admin is logged in
-    if (user && user.role === 'admin') {
-      const unreadNotifications = notifications.filter(n => !n.read);
+    if (user && user.role === 'admin' && unreadIds.length > 0) {
       try {
         await Promise.all(
-          unreadNotifications.map(notification =>
-            fetch(`${API_URL}/api/notifications/admin/${notification.id}/read`, {
+          unreadIds.map((id) =>
+            fetch(`${API_URL}/api/notifications/admin/${id}/read`, {
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
@@ -211,7 +220,7 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
   };
 
   const getUnreadCount = () => {
-    return notifications.filter(notification => !notification.read).length;
+    return notifications.filter((notification) => notification.read !== true).length;
   };
 
   // Refresh notifications manually
@@ -227,12 +236,9 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
 
         if (response.ok) {
           const data = await response.json();
-          // Format time for each notification
-          const formattedNotifications = data.map((notification: AdminNotification) => ({
-            ...notification,
-            time: notification.time || formatRelativeTime(notification.createdAt)
-          }));
-          setNotifications(formattedNotifications);
+          setNotifications(
+            data.map((n: AdminNotification) => normalizeAdminNotificationFromApi(n))
+          );
         }
       } catch (error) {
         console.error('Error refreshing admin notifications:', error);

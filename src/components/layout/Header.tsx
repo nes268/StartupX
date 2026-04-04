@@ -125,7 +125,7 @@ const Header: React.FC = () => {
       {/* Butterfly mark + wordmark */}
       <div className="flex items-center gap-2.5 sm:gap-3">
         <img
-          src="/favicon.png"
+          src="/header-mark.png"
           alt=""
           width={40}
           height={40}

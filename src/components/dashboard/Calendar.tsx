@@ -1,17 +1,44 @@
 import React, { useState } from 'react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Clock, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { ModalPortal } from '../ui/ModalPortal';
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  CheckCircle,
+  Loader2,
+  AlertCircle,
+  X,
+  ExternalLink,
+  MapPin,
+  User,
+} from 'lucide-react';
 import { Event } from '../../types';
 import { useEvents } from '../../hooks/useEvents';
+
+function formatDisplayDate(isoDate: string): string {
+  if (!isoDate) return '';
+  const d = new Date(isoDate.includes('T') ? isoDate : `${isoDate}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showEventForm, setShowEventForm] = useState(false);
-  
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
   // Use shared events API instead of local state
   const {
     events,
+    upcomingEvents,
     loading,
     error,
     createEvent,
@@ -340,38 +367,142 @@ const Calendar: React.FC = () => {
         {renderMonthView()}
       </Card>
 
-      {/* Upcoming Events */}
+      {/* Upcoming Events — titles only; full admin details in modal */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-[var(--text)] mb-4 flex items-center">
           <Clock className="h-5 w-5 mr-2" />
           Upcoming Events
         </h3>
-        <div className="space-y-4">
-          {events.map((event) => (
-            <div key={event.id} className="flex items-center justify-between p-4 bg-[var(--bg-muted)]/30 rounded-lg border border-[var(--border)]">
-              <div className="flex items-center space-x-4">
-                <div className="p-2 bg-[var(--accent-muted)] rounded-lg">
-                  <CalendarIcon className="h-4 w-4 text-[var(--accent)]" />
-                </div>
-                <div>
-                  <h4 className="text-[var(--text)] font-medium">{event.title}</h4>
-                  <p className="text-sm text-[var(--text-muted)]">{event.description}</p>
-                  <p className="text-xs text-[var(--text-subtle)]">{event.date} at {event.time} • {event.location}</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  event.category === 'Meeting' ? 'bg-blue-900/30 text-blue-400' :
-                  event.category === 'Mentorship' ? 'bg-emerald-900/30 text-emerald-400' :
-                  'bg-[var(--bg-muted)] text-[var(--text)]'
-                }`}>
-                  {event.category}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+        {upcomingEvents.length === 0 ? (
+          <p className="text-sm text-[var(--text-muted)] py-4 text-center">No upcoming events scheduled.</p>
+        ) : (
+          <ul className="space-y-1">
+            {upcomingEvents.map((event) => (
+              <li key={event.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedEvent(event)}
+                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--bg-muted)]/30 px-4 py-3 text-left transition-colors hover:bg-[var(--bg-muted)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 focus:ring-offset-[var(--bg-surface)]"
+                >
+                  <span className="font-medium text-[var(--text)]">{event.title}</span>
+                  <span className="mt-0.5 block text-xs text-[var(--text-muted)]">
+                    {formatDisplayDate(event.date)}
+                    {event.time ? ` · ${event.time}` : ''}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
+
+      {selectedEvent && (
+        <ModalPortal onBackdropClick={() => setSelectedEvent(null)}>
+          <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <Card className="max-h-[min(88vh,640px)] overflow-hidden border border-[var(--border-muted)] shadow-[var(--shadow-card)]">
+              <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[var(--border-muted)] px-5 py-4">
+                <h2 className="pr-8 text-lg font-semibold leading-snug text-[var(--text)]">
+                  {selectedEvent.title}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setSelectedEvent(null)}
+                  className="shrink-0 rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--bg-muted)]"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="max-h-[min(72vh,520px)] space-y-4 overflow-y-auto px-5 py-4 text-[var(--text)]">
+                {selectedEvent.description?.trim() ? (
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">Description</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-[var(--text-muted)]">{selectedEvent.description}</p>
+                  </div>
+                ) : null}
+
+                <div className="grid gap-3 text-sm">
+                  <div className="flex gap-2">
+                    <CalendarIcon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden />
+                    <div>
+                      <p className="text-xs font-medium text-[var(--text-muted)]">When</p>
+                      <p className="text-[var(--text)]">
+                        {formatDisplayDate(selectedEvent.date)}
+                        {selectedEvent.time ? ` at ${selectedEvent.time}` : ''}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden />
+                    <div>
+                      <p className="text-xs font-medium text-[var(--text-muted)]">Location</p>
+                      <p className="text-[var(--text)]">{selectedEvent.location || '—'}</p>
+                    </div>
+                  </div>
+                  {selectedEvent.category ? (
+                    <div>
+                      <p className="text-xs font-medium text-[var(--text-muted)]">Category</p>
+                      <span
+                        className={`mt-1 inline-block text-xs px-2 py-1 rounded-full ${
+                          selectedEvent.category === 'Meeting'
+                            ? 'bg-blue-900/30 text-blue-400'
+                            : selectedEvent.category === 'Mentorship'
+                              ? 'bg-emerald-900/30 text-emerald-400'
+                              : 'bg-[var(--bg-muted)] text-[var(--text)]'
+                        }`}
+                      >
+                        {selectedEvent.category}
+                      </span>
+                    </div>
+                  ) : null}
+                  {selectedEvent.organizedBy?.trim() ? (
+                    <div className="flex gap-2">
+                      <User className="mt-0.5 h-4 w-4 shrink-0 text-[var(--accent)]" aria-hidden />
+                      <div>
+                        <p className="text-xs font-medium text-[var(--text-muted)]">Organized by</p>
+                        <p className="text-[var(--text)]">{selectedEvent.organizedBy}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                {(selectedEvent.registrationLink?.trim() || selectedEvent.onlineEventUrl?.trim()) && (
+                  <div className="flex flex-col gap-2 border-t border-[var(--border-muted)] pt-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-[var(--text-muted)]">Links</p>
+                    {selectedEvent.registrationLink?.trim() ? (
+                      <a
+                        href={selectedEvent.registrationLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-[var(--accent)] hover:underline"
+                      >
+                        <ExternalLink className="h-4 w-4 shrink-0" />
+                        Registration
+                      </a>
+                    ) : null}
+                    {selectedEvent.onlineEventUrl?.trim() ? (
+                      <a
+                        href={selectedEvent.onlineEventUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-[var(--accent)] hover:underline"
+                      >
+                        <ExternalLink className="h-4 w-4 shrink-0" />
+                        Online event
+                      </a>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+              <div className="border-t border-[var(--border-muted)] px-5 py-3">
+                <Button type="button" variant="outline" className="w-full" onClick={() => setSelectedEvent(null)}>
+                  Close
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </ModalPortal>
+      )}
     </div>
   );
 };

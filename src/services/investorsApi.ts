@@ -1,4 +1,4 @@
-import { Investor, UpdateInvestorData } from '../types';
+import { Investor, CreateInvestorData, UpdateInvestorData } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -39,6 +39,17 @@ class InvestorsApi {
       headers: {
         'Content-Type': 'application/json',
       },
+    });
+    return this.handleResponse<Investor>(response);
+  }
+
+  async createInvestor(data: CreateInvestorData): Promise<Investor> {
+    const response = await fetch(`${API_URL}/api/investors`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
     return this.handleResponse<Investor>(response);
   }

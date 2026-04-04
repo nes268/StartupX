@@ -110,6 +110,26 @@ export interface UpdateInvestorData extends Partial<CreateInvestorData> {
   id: string;
 }
 
+export type ConnectionRequestTargetType = 'mentor' | 'investor';
+
+export type ConnectionRequestStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+
+export interface ConnectionRequest {
+  id: string;
+  startupUserId: string;
+  targetId: string;
+  targetType: ConnectionRequestTargetType;
+  message: string;
+  details: Record<string, unknown> | null;
+  startupName: string;
+  requesterEmail: string;
+  requesterName: string;
+  targetName: string;
+  status: ConnectionRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Report {
   id: string;
   name: string;

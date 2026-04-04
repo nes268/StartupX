@@ -23,6 +23,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { startupsApi } from '../../../services/startupsApi';
 import { profileApi } from '../../../services/profileApi';
 import { notificationsApi, UserNotification } from '../../../services/notificationsApi';
+import { connectionRequestsApi } from '../../../services/connectionRequestsApi';
 
 const PHASE_STEPS: { key: string; label: string }[] = [
   { key: 'idea', label: 'Idea' },
@@ -357,7 +358,7 @@ const Overview: React.FC = () => {
     }
   };
 
-  const handleRequestIntro = async (investor: { id: string; email: string; name: string }) => {
+  const handleRequestIntro = async (investor: { id: string; email: string; name: string; firm?: string }) => {
     if (!user?.id || !user?.email || !user?.fullName) {
       setIntroError('User information not available. Please log in again.');
       setTimeout(() => setIntroError(null), 5000);
@@ -373,9 +374,29 @@ const Overview: React.FC = () => {
     setRequestingIntro(investor.id);
     setIntroError(null);
     setIntroSuccess(null);
-    setIntroSuccess('Request submitted successfully.');
-    setTimeout(() => setIntroSuccess(null), 5000);
-    setRequestingIntro(null);
+    try {
+      const firm = investor.firm?.trim() || '';
+      await connectionRequestsApi.create({
+        startupUserId: user.id,
+        targetId: investor.id,
+        targetType: 'investor',
+        message: firm
+          ? `Introduction to investor ${investor.name} · ${firm}.`
+          : `Introduction to investor ${investor.name}.`,
+        details: { startupName, investorFirm: investor.firm || '' },
+        startupName,
+        requesterEmail: user.email,
+        requesterName: user.fullName,
+      });
+      setIntroSuccess('Request submitted successfully.');
+      setTimeout(() => setIntroSuccess(null), 5000);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to submit request.';
+      setIntroError(msg);
+      setTimeout(() => setIntroError(null), 5000);
+    } finally {
+      setRequestingIntro(null);
+    }
   };
 
 

@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Investor, UpdateInvestorData } from '../types';
+import { Investor, CreateInvestorData, UpdateInvestorData } from '../types';
 import { investorsApi } from '../services/investorsApi';
 
 export interface UseInvestorsReturn {
   investors: Investor[];
   loading: boolean;
   error: string | null;
+  createInvestor: (data: CreateInvestorData) => Promise<Investor>;
   updateInvestor: (investorData: UpdateInvestorData) => Promise<Investor>;
   deleteInvestor: (id: string) => Promise<void>;
   refreshInvestors: () => Promise<void>;
@@ -27,6 +28,19 @@ export const useInvestors = (): UseInvestorsReturn => {
       console.error('Error fetching investors:', err);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const createInvestor = useCallback(async (data: CreateInvestorData): Promise<Investor> => {
+    try {
+      setError(null);
+      const created = await investorsApi.createInvestor(data);
+      setInvestors((prev) => [created, ...prev]);
+      return created;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create investor';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     }
   }, []);
 
@@ -74,6 +88,7 @@ export const useInvestors = (): UseInvestorsReturn => {
     investors,
     loading,
     error,
+    createInvestor,
     updateInvestor,
     deleteInvestor,
     refreshInvestors,

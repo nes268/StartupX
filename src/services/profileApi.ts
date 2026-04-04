@@ -21,6 +21,20 @@ class ProfileApi {
     return this.handleResponse<Profile>(response);
   }
 
+  /** Admin data room: profile for the user linked to a startup (404 → null). */
+  async getProfileByStartupId(startupId: string): Promise<Profile | null> {
+    const response = await fetch(`${API_URL}/api/profiles/startup/${startupId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (response.status === 404) {
+      return null;
+    }
+    return this.handleResponse<Profile>(response);
+  }
+
   async saveProfile(profileData: Partial<Profile> & { userId: string }): Promise<Profile> {
     const response = await fetch(`${API_URL}/api/profiles`, {
       method: 'POST',

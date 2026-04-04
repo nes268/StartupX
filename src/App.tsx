@@ -26,6 +26,7 @@ import AdminMentors from './components/dashboard/admin/MentorManage';
 import AdminInvestors from './components/dashboard/admin/InvestorManage';
 import AdminStartups from './components/dashboard/admin/StartupManage';
 import AdminDataRoom from './components/dashboard/admin/AdminDataRoom';
+import MyRequests from './components/dashboard/MyRequests';
 import { startupsApi } from './services/startupsApi';
 import { notificationsApi, UserNotification } from './services/notificationsApi';
 import { Startup } from './types';
@@ -260,6 +261,7 @@ function App() {
             <Route path="calendar" element={<Calendar />} />
             <Route path="pitch-deck" element={<PitchDeck />} />
             <Route path="fundraising" element={<Fundraising />} />
+            <Route path="requests" element={<MyRequests />} />
             <Route path="settings" element={<Settings />} />
           </Route>
           

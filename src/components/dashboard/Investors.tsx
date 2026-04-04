@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Card from '../ui/Card';
-import { Users, AlertCircle, Loader2, ArrowLeft, Search } from 'lucide-react';
+import { Users, AlertCircle, Loader2, ArrowLeft, Search, Inbox } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useInvestors } from '../../hooks/useInvestors';
 import { useAuth } from '../../context/AuthContext';
 import { startupsApi } from '../../services/startupsApi';
 import { profileApi } from '../../services/profileApi';
+import { connectionRequestsApi } from '../../services/connectionRequestsApi';
 import { Investor } from '../../types';
 import InvestorDirectoryTable from './InvestorDirectoryTable';
 
@@ -74,9 +75,30 @@ const Investors: React.FC = () => {
     setRequestingIntro(investor.id);
     setIntroError(null);
     setIntroSuccess(null);
-    setIntroSuccess('Request submitted successfully.');
-    setTimeout(() => setIntroSuccess(null), 5000);
-    setRequestingIntro(null);
+    try {
+      const firm = investor.firm?.trim() || '';
+      await connectionRequestsApi.create({
+        startupUserId: user.id,
+        targetId: investor.id,
+        targetType: 'investor',
+        message: firm
+          ? `Introduction to investor ${investor.name} · ${firm}.`
+          : `Introduction to investor ${investor.name}.`,
+        details: { startupName, investorFirm: investor.firm || '' },
+        startupName,
+        requesterEmail: user.email,
+        requesterName: user.fullName,
+      });
+      setIntroSuccess('Request submitted successfully.');
+      setTimeout(() => setIntroSuccess(null), 5000);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to submit request.';
+      setIntroError(msg);
+      setTimeout(() => setIntroError(null), 5000);
+      throw e;
+    } finally {
+      setRequestingIntro(null);
+    }
   };
 
   return (
@@ -96,25 +118,34 @@ const Investors: React.FC = () => {
           <h1 className="text-3xl font-extrabold text-[var(--text)] mb-2">Available investors</h1>
           <p className="text-[var(--text-muted)]">Browse the directory and request an introduction.</p>
         </div>
-        <div className="w-full sm:w-auto sm:min-w-[220px] sm:max-w-sm shrink-0">
-          <label htmlFor="investor-directory-search" className="sr-only">
-            Search investors
-          </label>
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-subtle)]"
-              aria-hidden
-            />
-            <input
-              id="investor-directory-search"
-              type="search"
-              autoComplete="off"
-              placeholder="Search investors…"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--bg-surface)] py-2.5 pl-10 pr-3 text-sm text-[var(--text)] placeholder:text-[var(--text-subtle)] shadow-sm focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/25"
-            />
+        <div className="w-full sm:w-auto flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3 shrink-0">
+          <div className="w-full sm:w-auto sm:min-w-[220px] sm:max-w-sm">
+            <label htmlFor="investor-directory-search" className="sr-only">
+              Search investors
+            </label>
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-subtle)]"
+                aria-hidden
+              />
+              <input
+                id="investor-directory-search"
+                type="search"
+                autoComplete="off"
+                placeholder="Search investors…"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--bg-surface)] py-2.5 pl-10 pr-3 text-sm text-[var(--text)] placeholder:text-[var(--text-subtle)] shadow-sm focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/25"
+              />
+            </div>
           </div>
+          <Link
+            to="/dashboard/requests?from=investors"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm font-medium text-[var(--text)] shadow-sm transition-colors hover:border-[var(--accent)]/40 hover:bg-[var(--bg-muted)]/50 hover:text-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/25 whitespace-nowrap"
+          >
+            <Inbox className="h-4 w-4 shrink-0" aria-hidden />
+            My requests
+          </Link>
         </div>
       </div>
 

@@ -3,11 +3,92 @@ import Card from '../../ui/Card';
 import { ModalPortal } from '../../ui/ModalPortal';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Search, Filter, Download, Trash2, FileText, AlertCircle, Loader2, X, Building2, ArrowLeft, FolderOpen } from 'lucide-react';
+import {
+  Search,
+  Download,
+  Trash2,
+  FileText,
+  AlertCircle,
+  Loader2,
+  X,
+  Building2,
+  ArrowLeft,
+  FolderOpen,
+} from 'lucide-react';
 import { useStartups } from '../../../hooks/useStartups';
 import { useDocuments } from '../../../hooks/useDocuments';
 import { documentsApi } from '../../../services/documentsApi';
-import { Startup, Document } from '../../../types';
+import { profileApi } from '../../../services/profileApi';
+import { Startup, Document, Profile } from '../../../types';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+function resolveAssetUrl(ref: string): string {
+  if (!ref || typeof ref !== 'string') return '';
+  const t = ref.trim();
+  if (!t) return '';
+  if (t.startsWith('http://') || t.startsWith('https://') || t.startsWith('data:')) return t;
+  return t.startsWith('/') ? `${API_BASE}${t}` : `${API_BASE}/${t}`;
+}
+
+function fileLabel(ref: string): string {
+  if (!ref) return '';
+  const parts = ref.split(/[/\\]/);
+  return parts[parts.length - 1] || ref;
+}
+
+type ProfileFileRow = { key: string; label: string; href: string };
+
+function collectProfileFileRows(profile: Profile): ProfileFileRow[] {
+  const rows: ProfileFileRow[] = [];
+  const add = (label: string, href: string | undefined, key: string) => {
+    const h = href?.trim();
+    if (h) rows.push({ key, label, href: h });
+  };
+  add('Aadhaar', profile.aadhaarDoc, 'aadhaar');
+  add('Incorporation certificate', profile.incorporationCert, 'incorporation');
+  add('MSME certificate', profile.msmeCert, 'msme');
+  add('DPIIT certificate', profile.dpiitCert, 'dpiit');
+  add('MOU / partnership', profile.mouPartnership, 'mou');
+  add('Balance sheet', profile.balanceSheet, 'balance');
+  (profile.businessDocuments || []).forEach((href, i) => {
+    add(`Pitch / business document ${i + 1}`, href, `business-${i}`);
+  });
+  (profile.tractionDetails || []).forEach((href, i) => {
+    add(`Traction upload ${i + 1}`, href, `traction-${i}`);
+  });
+  return rows;
+}
+
+function sortDocumentsForDisplay(docs: Document[]): Document[] {
+  return [...docs].sort((a, b) => {
+    const pitch = (loc: string) => (/pitch/i.test(loc || '') ? 0 : 1);
+    return pitch(a.location) - pitch(b.location) || a.name.localeCompare(b.name);
+  });
+}
+
+function extFromRef(ref: string): string {
+  const name = fileLabel(ref);
+  const i = name.lastIndexOf('.');
+  return i >= 0 ? name.slice(i + 1).toLowerCase() : 'file';
+}
+
+type UnifiedFileRow =
+  | { kind: 'document'; doc: Document }
+  | { kind: 'profile'; key: string; label: string; href: string };
+
+function buildUnifiedRows(docs: Document[], profile: Profile | null): UnifiedFileRow[] {
+  const docRows: UnifiedFileRow[] = sortDocumentsForDisplay(docs).map((doc) => ({ kind: 'document', doc }));
+  const profileRows: UnifiedFileRow[] = profile
+    ? collectProfileFileRows(profile).map((r) => ({
+        kind: 'profile',
+        key: `profile-${r.key}`,
+        label: r.label,
+        href: r.href,
+      }))
+    : [];
+  return [...docRows, ...profileRows];
+}
 
 const AdminDataRoom: React.FC = () => {
   const { startups, loading: startupsLoading, refreshStartups } = useStartups();
@@ -21,6 +102,8 @@ const AdminDataRoom: React.FC = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [documentCounts, setDocumentCounts] = useState<Record<string, number>>({});
+  const [startupProfile, setStartupProfile] = useState<Profile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -39,28 +122,31 @@ const AdminDataRoom: React.FC = () => {
 
   useEffect(() => {
     if (selectedStartup) {
-      console.log('Selected startup:', selectedStartup);
-      // Always try to load documents - we have fallback methods in the backend
-      const userId = selectedStartup.userId && selectedStartup.userId !== 'null' && selectedStartup.userId !== 'undefined' 
-        ? selectedStartup.userId 
-        : undefined;
-      loadStartupDocuments(userId || '', selectedStartup.id);
+      const userId =
+        selectedStartup.userId &&
+        selectedStartup.userId !== 'null' &&
+        selectedStartup.userId !== 'undefined'
+          ? selectedStartup.userId
+          : '';
+      loadStartupFiles(userId, selectedStartup.id);
+    } else {
+      setStartupProfile(null);
+      setStartupDocuments([]);
     }
   }, [selectedStartup]);
 
-  // Load document counts for all startups
+  // Load file counts (data room + profile) for all startups
   useEffect(() => {
     const loadDocumentCounts = async () => {
       const counts: Record<string, number> = {};
       for (const startup of startups) {
-        if (startup.userId) {
-          try {
-            const docs = await getDocumentsByUserId(startup.userId);
-            counts[startup.id] = docs.length;
-          } catch (error) {
-            console.error(`Error loading document count for startup ${startup.id}:`, error);
-            counts[startup.id] = 0;
-          }
+        try {
+          const docs = await documentsApi.getDocumentsByStartupId(startup.id);
+          const profile = await profileApi.getProfileByStartupId(startup.id);
+          const extra = profile ? collectProfileFileRows(profile).length : 0;
+          counts[startup.id] = docs.length + extra;
+        } catch {
+          counts[startup.id] = 0;
         }
       }
       setDocumentCounts(counts);
@@ -69,60 +155,56 @@ const AdminDataRoom: React.FC = () => {
     if (startups.length > 0) {
       loadDocumentCounts();
     }
-  }, [startups, getDocumentsByUserId]);
+  }, [startups]);
 
-  const loadStartupDocuments = async (userId: string, startupId?: string) => {
+  const loadStartupFiles = async (userId: string, startupId?: string) => {
     setLoadingDocuments(true);
+    setLoadingProfile(true);
     setError(null);
     try {
-      console.log('Loading documents for userId:', userId, 'startupId:', startupId);
-      
       let docs: Document[] = [];
-      
-      // Prioritize startupId method as it has better fallback logic (email lookup, owner name matching)
+
       if (startupId) {
         try {
           docs = await documentsApi.getDocumentsByStartupId(startupId);
-          console.log('Documents loaded via startupId:', docs.length, 'documents');
-        } catch (startupIdError: any) {
-          console.warn('Failed to load via startupId, trying userId as fallback:', startupIdError);
-          // If startupId fails, try userId as fallback
+        } catch (startupIdError: unknown) {
           if (userId && userId !== 'null' && userId !== 'undefined') {
             try {
               docs = await getDocumentsByUserId(userId);
-              console.log('Documents loaded via userId:', docs.length, 'documents');
-            } catch (userIdError: any) {
-              console.error('Both methods failed:', { startupIdError, userIdError });
-              throw new Error(`Failed to load documents. StartupId method: ${startupIdError?.message || 'unknown error'}. UserId method: ${userIdError?.message || 'unknown error'}`);
+            } catch (userIdError: unknown) {
+              const a = startupIdError instanceof Error ? startupIdError.message : 'unknown';
+              const b = userIdError instanceof Error ? userIdError.message : 'unknown';
+              throw new Error(`Failed to load documents (${a}; ${b})`);
             }
           } else {
             throw startupIdError;
           }
         }
       } else if (userId && userId !== 'null' && userId !== 'undefined') {
-        // If no startupId, try userId only
-        try {
-          docs = await getDocumentsByUserId(userId);
-          console.log('Documents loaded via userId:', docs.length, 'documents');
-        } catch (userIdError: any) {
-          throw userIdError;
-        }
+        docs = await getDocumentsByUserId(userId);
       } else {
         throw new Error('No valid userId or startupId provided');
       }
-      
+
       setStartupDocuments(docs || []);
-      if (docs.length === 0) {
-        console.log('No documents found for this startup');
-        setError(null); // Don't show error if no documents found, just show empty state
+
+      let profile: Profile | null = null;
+      if (startupId) {
+        try {
+          profile = await profileApi.getProfileByStartupId(startupId);
+        } catch {
+          profile = null;
+        }
       }
-    } catch (error: any) {
-      console.error('Error loading documents:', error);
-      const errorMessage = error?.message || 'Failed to load documents. Please try again.';
+      setStartupProfile(profile);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load documents. Please try again.';
       setError(`Error: ${errorMessage}`);
       setStartupDocuments([]);
+      setStartupProfile(null);
     } finally {
       setLoadingDocuments(false);
+      setLoadingProfile(false);
     }
   };
 
@@ -168,10 +250,15 @@ const AdminDataRoom: React.FC = () => {
     if (window.confirm(`Are you sure you want to delete "${documentName}"?`)) {
       try {
         await deleteDocument(documentId);
-        if (selectedStartup?.userId) {
-          await loadStartupDocuments(selectedStartup.userId, selectedStartup.id);
+        if (selectedStartup) {
+          const uid =
+            selectedStartup.userId &&
+            selectedStartup.userId !== 'null' &&
+            selectedStartup.userId !== 'undefined'
+              ? selectedStartup.userId
+              : '';
+          await loadStartupFiles(uid, selectedStartup.id);
         }
-        // Show success message
         setError(null);
       } catch (error) {
         console.error('Delete error:', error);
@@ -196,6 +283,9 @@ const AdminDataRoom: React.FC = () => {
 
   // If a startup is selected, show its documents
   if (selectedStartup) {
+    const unifiedRows = buildUnifiedRows(startupDocuments, startupProfile);
+    const filesLoading = loadingDocuments || loadingProfile;
+
     return (
       <div className="space-y-6">
         {/* Header */}
@@ -238,14 +328,14 @@ const AdminDataRoom: React.FC = () => {
           </Card>
         )}
 
-        {/* Documents List */}
+        {/* Single list: data room + pitch deck uploads + profile / onboarding files */}
         <Card className="p-6">
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Documents ({startupDocuments.length})</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Documents ({unifiedRows.length})</h3>
             <p className="text-sm text-gray-600">All documents uploaded by this startup</p>
           </div>
 
-          {loadingDocuments ? (
+          {filesLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="flex items-center space-x-3">
                 <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
@@ -258,7 +348,7 @@ const AdminDataRoom: React.FC = () => {
               <h3 className="text-lg font-medium text-red-600 mb-2">Error Loading Documents</h3>
               <p className="text-gray-600">{error}</p>
             </div>
-          ) : startupDocuments.length > 0 ? (
+          ) : unifiedRows.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -271,33 +361,62 @@ const AdminDataRoom: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {startupDocuments.map((doc) => (
-                    <tr key={doc.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center space-x-3">
-                          {getFileIcon(doc.type)}
-                          <div>
-                            <span className="text-gray-900 font-medium">{doc.name}</span>
-                            <div className="text-xs text-gray-600">{doc.location}</div>
+                  {unifiedRows.map((row) =>
+                    row.kind === 'document' ? (
+                      <tr key={row.doc.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                        <td className="py-4 px-4">
+                          <div className="flex items-center space-x-3">
+                            {getFileIcon(row.doc.type)}
+                            <div>
+                              <span className="text-gray-900 font-medium">{row.doc.name}</span>
+                              <div className="text-xs text-gray-600">{row.doc.location}</div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-gray-700 uppercase">{doc.type}</td>
-                      <td className="py-4 px-4 text-gray-700">{doc.fileSize}</td>
-                      <td className="py-4 px-4 text-gray-700">{doc.uploadDate}</td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center space-x-2">
-                          <button 
-                            className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-400/10 rounded-lg transition-colors"
-                            title="Download document"
-                            onClick={() => handleDownloadDocument(doc)}
+                        </td>
+                        <td className="py-4 px-4 text-gray-700 uppercase">{row.doc.type}</td>
+                        <td className="py-4 px-4 text-gray-700">{row.doc.fileSize}</td>
+                        <td className="py-4 px-4 text-gray-700">{row.doc.uploadDate}</td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              type="button"
+                              className="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-400/10 rounded-lg transition-colors"
+                              title="Download document"
+                              onClick={() => handleDownloadDocument(row.doc)}
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={row.key} className="border-b border-gray-200 hover:bg-gray-50 transition-colors">
+                        <td className="py-4 px-4">
+                          <div className="flex items-center space-x-3">
+                            {getFileIcon(extFromRef(row.href))}
+                            <div>
+                              <span className="text-gray-900 font-medium">{row.label}</span>
+                              <div className="text-xs text-gray-600">{fileLabel(row.href)}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-gray-700 uppercase">{extFromRef(row.href)}</td>
+                        <td className="py-4 px-4 text-gray-700">—</td>
+                        <td className="py-4 px-4 text-gray-700">—</td>
+                        <td className="py-4 px-4">
+                          <a
+                            href={resolveAssetUrl(row.href)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-400/10 rounded-lg transition-colors"
+                            title="Open file"
                           >
                             <Download className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                          </a>
+                        </td>
+                      </tr>
+                    )
+                  )}
                 </tbody>
               </table>
             </div>
@@ -305,7 +424,7 @@ const AdminDataRoom: React.FC = () => {
             <div className="text-center py-12">
               <FolderOpen className="h-16 w-16 text-gray-600 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-700 mb-2">No documents found</h3>
-              <p className="text-gray-600">This startup hasn't uploaded any documents yet.</p>
+              <p className="text-gray-600">This startup hasn&apos;t uploaded any documents yet.</p>
             </div>
           )}
         </Card>
@@ -441,8 +560,7 @@ const AdminDataRoom: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredStartups.map((startup) => {
               const docCount = documentCounts[startup.id] ?? 0;
-              const hasUserId = !!startup.userId && startup.userId !== 'null' && startup.userId !== 'undefined';
-              
+
               return (
                 <Card 
                   key={startup.id} 

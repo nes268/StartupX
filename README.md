@@ -17,6 +17,8 @@ The platform serves two primary roles:
 
 **Storage:** File uploads are stored in `server/uploads`.
 
+SETUP GUIDE : https://drive.google.com/file/d/1IfNVxSRJjMnidwEltOn5I3exQNS7aMJi/view?usp=sharing  DEMO DOCUMENTATION :https://drive.google.com/file/d/1zg7jfiMtRkdkU616FBxdaya7X0Wy15Bu/view?usp=sharing
+
 ---
 
 ## Key features
@@ -46,6 +48,7 @@ After **admission is approved**, startup users access a dedicated workspace with
 | **Data room** | Uploaded documents and files |
 | **Mentors** | Mentor directory and session requests |
 | **Investors** | Investor directory and intro requests |
+| **My requests** | History of mentor session and investor introduction requests |
 | **Calendar** | Events and important schedules |
 | **Pitch deck / Fundraising** | Founder-focused support tools |
 | **Settings** | Profile, participation, and stage updates |
@@ -97,7 +100,8 @@ The admin console includes:
 | **Events** | Incubation event management |
 | **Mentors** | Mentor profiles |
 | **Investors** | Investor profiles |
-| **Notifications** | System and admin alerts |
+| **Mentor / Investor manage** | Use **Mentor requests** / **Investor requests** on those pages to view and update connection request status |
+| **Notifications** | System and admin alerts (connection requests can be opened for full detail) |
 
 ---
 
@@ -167,7 +171,7 @@ Submitting the form sends **the application** into the **administrative review**
 | **Pitch deck / Fundraising** | Founder support tools |
 | **Settings** | Profile, venture stage, and participation controls |
 
-**Note:** Mentor and investor request notifications are **in-app only**. **SMTP / outbound email** for those flows is **planned** (not implemented yet).
+**Connection requests (mentors & investors):** When a founder submits a request, the app **creates a record** in the MongoDB `requests` collection first. Admins see a **notification** on the overview and can open **Request details** (topic, time slot, notes, investor firm, etc.). **SMTP is optional:** if `SMTP_USER` / `SMTP_PASS` (or `EMAIL_USER` / `EMAIL_PASSWORD`) are set in `server/.env`, the backend **emails the mentor** for session requests only; investor intros stay in-app unless you extend mail later.
 
 ---
 
@@ -182,7 +186,25 @@ Submitting the form sends **the application** into the **administrative review**
 | **Events** | Create and manage incubation events |
 | **Mentors** | Manage mentor profiles |
 | **Investors** | Manage investor profiles |
+| **Mentor / Investor manage** | **Mentor requests** and **Investor requests** buttons open the filtered request list (same as former standalone Requests page) |
 | **Notifications** | System and admin alerts |
+
+---
+
+## Connection requests (`requests` collection)
+
+Mentor session and investor introduction flows share one model:
+
+| Field | Purpose |
+|--------|---------|
+| `startupUserId` | Founder (`User`) who submitted the request |
+| `targetId` | Mentor or investor document id |
+| `targetType` | `mentor` or `investor` |
+| `message` | Short summary stored for history |
+| `details` | Extra payload (e.g. topic, time slot, notes, `investorFirm`) |
+| `status` | `pending`, `in_progress`, `completed`, `cancelled` |
+
+**API (examples):** `POST /api/requests`, `GET /api/requests/user/:userId`, `GET /api/requests/admin`, `GET /api/requests/:id`, `PATCH /api/requests/:id/status`. Legacy: `POST /api/mentors/request-session` (requires `startupUserId`; still creates the same stored request and optional mentor email).
 
 ---
 
@@ -209,10 +231,11 @@ Submitting the form sends **the application** into the **administrative review**
 - Multer  
 - dotenv  
 - cors  
+- nodemailer (optional SMTP for mentor session emails)
 
 ### Planned / future
 
-- **Nodemailer / SMTP** integration for mentor and investor request emails  
+- SMTP or other channels for **investor** introduction notifications (mentor email is already optional via env)
 
 ---
 
@@ -227,6 +250,7 @@ Submitting the form sends **the application** into the **administrative review**
 | **Session** | Client-side auth context with `localStorage` |
 | **Backend** | Express server + MongoDB via Mongoose |
 | **File uploads** | Stored under `server/uploads` |
+| **Mentor / investor requests** | Persisted in `requests`; admin notifications link to the row for detail modal |
 
 ---
 
@@ -252,6 +276,19 @@ Create `server/.env`:
 MONGODB_URI=mongodb://localhost:27017/citbif
 PORT=5000
 ```
+
+Optional — **mentor session emails** (same behavior as existing Nodemailer setup; leave unset to skip sending mail):
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM=
+# Alternatives also supported in code: EMAIL_USER, EMAIL_PASSWORD
+```
+
+**Default admin (local / staging):** from `server/`, run `npm run seed-admin`. It creates `admin@gmail.com` / `admin123` (username `admin`) or **resets the password** to `admin123` if that admin already exists.
 
 Start the backend:
 
@@ -324,15 +361,10 @@ Do not commit secrets or `.env` files.
 |----------|--------|
 | `MONGODB_URI` | Required — MongoDB connection string |
 | `PORT` | Optional — e.g. `5000` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` | Optional — if set, mentor session requests trigger an email to the mentor; if omitted, the request is still saved and admins are notified in-app |
+| `EMAIL_USER`, `EMAIL_PASSWORD` | Optional — alternate names read by the same mail path |
 
-Optional placeholders (**future / not wired for mentor–investor mail yet**):
-
-```env
-SMTP_HOST=
-SMTP_PORT=
-SMTP_USER=
-SMTP_PASS=
-```
+**Login:** email matching is **case-insensitive** when the identifier contains `@`; leading/trailing spaces are trimmed on the client and server.
 
 ### Frontend (root `.env`)
 
@@ -351,6 +383,7 @@ Use the correct production API URL when deploying (no trailing slash).
 ```bash
 npm start
 npm run dev
+npm run seed-admin   # create or reset default admin (admin@gmail.com / admin123)
 ```
 
 **Frontend (repository root)**
@@ -376,7 +409,7 @@ npm run lint
 
 ## Future improvements
 
-- SMTP email notifications for mentor / investor requests  
+- Email (or other notifications) for **investor** introduction requests  
 - Cloud file storage (AWS S3, Cloudinary, etc.)  
 - Stronger role-based route protection  
 - Admin analytics enhancements  

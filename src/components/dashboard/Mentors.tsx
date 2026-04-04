@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
-import { Search, User, MessageSquare, Loader2, AlertCircle } from 'lucide-react';
+import { Search, User, MessageSquare, Loader2, AlertCircle, Inbox } from 'lucide-react';
 import { Mentor } from '../../types';
 import { useMentors } from '../../hooks/useMentors';
-import { mentorsApi } from '../../services/mentorsApi';
+import { connectionRequestsApi } from '../../services/connectionRequestsApi';
 import { useAuth } from '../../context/AuthContext';
 
 const Mentors: React.FC = () => {
@@ -92,20 +93,48 @@ const Mentors: React.FC = () => {
       setSubmitError('Mentor information is missing');
       return;
     }
+    if (!user?.id) {
+      setSubmitError('You must be signed in to submit a request.');
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(false);
 
+    const topicDisplayNames: Record<string, string> = {
+      'business-strategy': 'Business Strategy',
+      'product-development': 'Product Development',
+      marketing: 'Marketing & Growth',
+      fundraising: 'Fundraising',
+      operations: 'Operations',
+      leadership: 'Leadership',
+    };
+    const timeSlotDisplayNames: Record<string, string> = {
+      morning: 'Morning (9 AM - 12 PM)',
+      afternoon: 'Afternoon (12 PM - 5 PM)',
+      evening: 'Evening (5 PM - 8 PM)',
+      flexible: 'Flexible',
+    };
+    const topicDisplay = topicDisplayNames[formData.topic] || formData.topic;
+    const timeDisplay = timeSlotDisplayNames[formData.preferredTimeSlot] || formData.preferredTimeSlot;
+    const message = `Mentoring session · ${topicDisplay} · ${timeDisplay}`;
+
     try {
-      await mentorsApi.requestSession({
-        mentorEmail: selectedMentor.email,
+      await connectionRequestsApi.create({
+        startupUserId: user.id,
+        targetId: selectedMentor.id,
+        targetType: 'mentor',
+        message,
+        details: {
+          topic: formData.topic,
+          preferredTimeSlot: formData.preferredTimeSlot,
+          additionalNotes: formData.additionalNotes.trim() || '',
+          startupName: formData.startupName.trim(),
+        },
         startupName: formData.startupName.trim(),
-        topic: formData.topic,
-        preferredTimeSlot: formData.preferredTimeSlot,
-        additionalNotes: formData.additionalNotes.trim() || undefined,
-        requesterEmail: user?.email,
-        requesterName: user?.fullName
+        requesterEmail: user.email,
+        requesterName: user.fullName,
       });
 
       setSubmitSuccess(true);
@@ -141,7 +170,7 @@ const Mentors: React.FC = () => {
           {/* Profile Card */}
           <Card className="p-6">
             <div className="text-center mb-6">
-              <div className="h-24 w-24 bg-[var(--accent)] rounded-full flex items-center justify-center text-[var(--text-inverse)] font-bold text-2xl mx-auto mb-4">
+              <div className="h-24 w-24 bg-[var(--accent-muted)] rounded-full flex items-center justify-center text-[var(--accent)] font-bold text-2xl mx-auto mb-4">
                 {selectedMentor.profilePicture}
               </div>
               <h2 className="text-2xl font-bold text-[var(--text)] mb-2">{selectedMentor.name}</h2>
@@ -260,7 +289,7 @@ const Mentors: React.FC = () => {
                   Selected Mentor
                 </label>
                 <div className="flex items-center space-x-3 p-3 bg-[var(--bg-muted)]/30 rounded-lg">
-                  <div className="h-10 w-10 bg-[var(--accent)] rounded-full flex items-center justify-center text-[var(--text-inverse)] font-medium">
+                  <div className="h-10 w-10 bg-[var(--accent-muted)] rounded-full flex items-center justify-center text-[var(--accent)] font-medium">
                     {selectedMentor.profilePicture}
                   </div>
                   <div>
@@ -416,21 +445,26 @@ const Mentors: React.FC = () => {
         </Card>
       )}
 
-      {/* Search */}
+      {/* Search + My requests */}
       <Card className="p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-              <Input
-                type="text"
-                placeholder="Search mentors by name, expertise, or bio..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[var(--text-muted)] pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search mentors by name, expertise, or bio..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
+          <Link
+            to="/dashboard/requests?from=mentors"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-surface)] px-4 py-2.5 text-sm font-medium text-[var(--text)] shadow-sm transition-colors hover:border-[var(--accent)]/40 hover:bg-[var(--bg-muted)]/50 hover:text-[var(--accent)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/25"
+          >
+            <Inbox className="h-4 w-4 shrink-0" aria-hidden />
+            My requests
+          </Link>
         </div>
       </Card>
 
@@ -439,7 +473,7 @@ const Mentors: React.FC = () => {
         {filteredMentors.map((mentor) => (
           <Card key={mentor.id} className="p-6" hover>
             <div className="text-center mb-4">
-              <div className="h-16 w-16 bg-[var(--accent)] rounded-full flex items-center justify-center text-[var(--text-inverse)] font-bold text-xl mx-auto mb-3">
+              <div className="h-16 w-16 bg-[var(--accent-muted)] rounded-full flex items-center justify-center text-[var(--accent)] font-bold text-xl mx-auto mb-3">
                 {mentor.profilePicture}
               </div>
               <h3 className="text-xl font-semibold text-[var(--text)] mb-1">{mentor.name}</h3>

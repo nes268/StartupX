@@ -5,10 +5,14 @@ import AnimatedBackground from '../layout/AnimatedBackground';
 import { useAuth } from '../../context/AuthContext';
 
 const BRAND = 'CITBIF';
-const SPLASH_DELAY_CHILDREN = 0.28;
-const SPLASH_STAGGER = 0.22;
-const SPLASH_LETTER_DURATION_S = 0.92;
-const SPLASH_HOLD_AFTER_MS = 950;
+/** Brief beat before the first letter — keeps the entrance intentional, not sluggish */
+const SPLASH_DELAY_CHILDREN = 0.14;
+/** Space between letters: quick cascade, still readable one-by-one */
+const SPLASH_STAGGER = 0.1;
+/** Each letter’s own motion — short enough to feel snappy */
+const SPLASH_LETTER_DURATION_S = 0.55;
+/** Pause on the full word before routing to login */
+const SPLASH_HOLD_AFTER_MS = 620;
 
 const containerVariants = {
   hidden: { opacity: 1 },
@@ -24,8 +28,8 @@ const containerVariants = {
 const letterVariants = {
   hidden: {
     opacity: 0,
-    y: 48,
-    filter: 'blur(12px)',
+    y: 22,
+    filter: 'blur(8px)',
   },
   visible: {
     opacity: 1,
@@ -33,7 +37,7 @@ const letterVariants = {
     filter: 'blur(0px)',
     transition: {
       duration: SPLASH_LETTER_DURATION_S,
-      ease: [0.19, 1, 0.35, 1],
+      ease: [0.22, 1, 0.36, 1],
     },
   },
 };
@@ -87,7 +91,7 @@ const SplashScreen: React.FC = () => {
     <div className="min-h-screen relative isolate overflow-hidden flex items-center justify-center px-4 sm:px-6 py-10">
       <AnimatedBackground />
       <motion.div
-        className="relative z-10 flex items-baseline justify-center gap-[0.03em] select-none"
+        className="relative z-10 flex items-baseline justify-center gap-[0.045em] select-none"
         variants={containerVariants}
         initial="hidden"
         animate="visible"

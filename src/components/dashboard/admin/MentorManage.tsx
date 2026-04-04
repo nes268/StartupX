@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import Card from '../../ui/Card';
 import Button from '../../ui/Button';
 import Input from '../../ui/Input';
-import { Plus, Edit, Trash2, Search, User, Mail, AlertCircle, Loader2 } from 'lucide-react';
+import { ModalPortal } from '../../ui/ModalPortal';
+import ConnectionRequestsAdminPanel from './ConnectionRequestsAdminPanel';
+import { Plus, Edit, Trash2, Search, User, Mail, AlertCircle, Loader2, ClipboardList, X } from 'lucide-react';
 import { Mentor, CreateMentorData, UpdateMentorData } from '../../../types';
 import { useMentors } from '../../../hooks/useMentors';
 
 const MentorManage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [editingMentor, setEditingMentor] = useState<Mentor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -264,15 +267,26 @@ const MentorManage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Mentor Management</h1>
           <p className="text-gray-600 mt-1">Manage mentors available to startups</p>
         </div>
-        <Button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2">
-          <Plus className="h-4 w-4" />
-          <span>Add Mentor</span>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowRequestsModal(true)}
+            className="flex items-center gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            <span>Mentor requests</span>
+          </Button>
+          <Button onClick={() => setShowAddForm(true)} className="flex items-center space-x-2">
+            <Plus className="h-4 w-4" />
+            <span>Add Mentor</span>
+          </Button>
+        </div>
       </div>
 
       {/* Error Display */}
@@ -322,7 +336,7 @@ const MentorManage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent)] text-sm font-bold text-gray-900">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--accent-muted)] text-sm font-semibold text-[var(--accent)]">
                     {renderProfileAvatar(mentor.profilePicture, mentor.name)}
                   </div>
                   <div>
@@ -371,6 +385,29 @@ const MentorManage: React.FC = () => {
             Add First Mentor
           </Button>
         </Card>
+      )}
+
+      {showRequestsModal && (
+        <ModalPortal onBackdropClick={() => setShowRequestsModal(false)}>
+          <div className="w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <Card className="flex max-h-[min(88vh,820px)] flex-col overflow-hidden border border-[var(--border-muted)] shadow-[var(--shadow-card)]">
+              <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border-muted)] px-4 py-3">
+                <h2 className="text-lg font-semibold text-[var(--text)]">Mentor session requests</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowRequestsModal(false)}
+                  className="rounded-lg p-2 text-[var(--text-muted)] hover:bg-[var(--bg-muted)]"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto p-4">
+                <ConnectionRequestsAdminPanel targetType="mentor" withCard={false} embedded />
+              </div>
+            </Card>
+          </div>
+        </ModalPortal>
       )}
     </div>
   );
